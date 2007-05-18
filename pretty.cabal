@@ -1,0 +1,13 @@
+name:		pretty
+version:	1.0
+license:	BSD3
+license-file:	LICENSE
+maintainer:	libraries@haskell.org
+synopsis:	Pretty-printing library
+description:
+	This package contains a pretty-printing library.
+exposed-modules:
+	Text.PrettyPrint
+	Text.PrettyPrint.HughesPJ
+build-depends: base
+
