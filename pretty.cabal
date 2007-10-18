@@ -6,6 +6,7 @@ maintainer:	libraries@haskell.org
 synopsis:	Pretty-printing library
 description:
 	This package contains a pretty-printing library.
+build-type: Simple
 exposed-modules:
 	Text.PrettyPrint
 	Text.PrettyPrint.HughesPJ
