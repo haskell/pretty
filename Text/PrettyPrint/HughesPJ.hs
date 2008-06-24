@@ -407,6 +407,10 @@ Laws for text
 ~~~~~~~~~~~~~
 <t1>    text s <> text t        = text (s++t)
 <t2>    text "" <> x            = x, if x non-empty
+  
+** because of law n6, t2 only holds if x doesn't
+** start with `nest'.
+    
 
 Laws for nest
 ~~~~~~~~~~~~~
@@ -422,8 +426,8 @@ Laws for nest
 
 Miscellaneous
 ~~~~~~~~~~~~~
-<m1>    (text s <> x) $$ y = text s <> ((text "" <> x)) $$ 
-                                         nest (-length s) y)
+<m1>    (text s <> x) $$ y = text s <> ((text "" <> x) $$
+                                         nest (-length s) y) 
 
 <m2>    (x $$ y) <> z = x $$ (y <> z)
         if y non-empty
@@ -483,10 +487,23 @@ parens p        = char '(' <> p <> char ')'
 brackets p      = char '[' <> p <> char ']'
 braces p        = char '{' <> p <> char '}'
 
+-- lazy list versions
+hcat = reduceAB . foldr (beside_' False) empty
+hsep = reduceAB . foldr (beside_' True)  empty
+vcat = reduceAB . foldr (above_' True) empty
 
-hcat = foldr (<>)  empty
-hsep = foldr (<+>) empty
-vcat = foldr ($$)  empty
+beside_' :: Bool -> Doc -> Doc -> Doc
+beside_' _ p Empty = p
+beside_' g p q = Beside p g q
+
+above_' :: Bool -> Doc -> Doc -> Doc
+above_' _ p Empty = p
+above_' g p q = Above p g q
+
+reduceAB :: Doc -> Doc
+reduceAB (Above Empty _ q) = q
+reduceAB (Beside Empty _ q) = q
+reduceAB doc = doc
 
 hang d1 n d2 = sep [d1, nest n d2]
 
@@ -536,7 +553,7 @@ nl_text    = Chr '\n'
   * The argument of NilAbove is never Empty. Therefore
     a NilAbove occupies at least two lines.
   
-  * The arugment of @TextBeside@ is never @Nest@.
+  * The argument of @TextBeside@ is never @Nest@.
   
   
   * The layouts of the two arguments of @Union@ both flatten to the same 
@@ -544,9 +561,9 @@ nl_text    = Chr '\n'
   
   * The arguments of @Union@ are either @TextBeside@, or @NilAbove@.
   
-  * The right argument of a union cannot be equivalent to the empty set
-    (@NoDoc@).  If the left argument of a union is equivalent to the
-    empty set (@NoDoc@), then the @NoDoc@ appears in the first line.
+  * A @NoDoc@ may only appear on the first line of the left argument of an 
+    union. Therefore, the right argument of an union can never be equivalent
+    to the empty set (@NoDoc@).
   
   * An empty document is always represented by @Empty@.  It can't be
     hidden inside a @Nest@, or a @Union@ of two @Empty@s.
@@ -558,20 +575,18 @@ nl_text    = Chr '\n'
     least two lines.
 -}
 
-        -- Arg of a NilAbove is always an RDoc
-nilAbove_ :: Doc -> Doc
+-- Invariant: Args to the 4 functions below are always RDocs
+nilAbove_ :: RDoc -> RDoc
 nilAbove_ p = NilAbove p
 
         -- Arg of a TextBeside is always an RDoc
-textBeside_ :: TextDetails -> Int -> Doc -> Doc
+textBeside_ :: TextDetails -> Int -> RDoc -> RDoc
 textBeside_ s sl p = TextBeside s sl p
 
-        -- Arg of Nest is always an RDoc
-nest_ :: Int -> Doc -> Doc
+nest_ :: Int -> RDoc -> RDoc
 nest_ k p = Nest k p
 
-        -- Args of union are always RDocs
-union_ :: Doc -> Doc -> Doc
+union_ :: RDoc -> RDoc -> RDoc
 union_ p q = Union p q
 
 
@@ -747,7 +762,7 @@ sepNB g (Nest _ p)  k ys  = sepNB g p k ys
 
 sepNB g Empty k ys        = oneLiner (nilBeside g (reduceDoc rest))
                                 `mkUnion` 
-                            nilAboveNest False k (reduceDoc (vcat ys))
+                            nilAboveNest True k (reduceDoc (vcat ys))
                           where
                             rest | g         = hsep ys
                                  | otherwise = hcat ys
@@ -792,15 +807,16 @@ fillNB :: Bool -> Doc -> Int -> [Doc] -> Doc
 fillNB _ _           k _  | k `seq` False = undefined
 fillNB g (Nest _ p)  k ys  = fillNB g p k ys
 fillNB _ Empty _ []        = Empty
-fillNB g Empty k (y:ys)    = nilBeside g (fill1 g (oneLiner (reduceDoc y)) k1 ys)
+fillNB g Empty k (Empty:ys)  = fillNB g Empty k ys
+fillNB g Empty k (y:ys)    = fillNBE g k y ys
+fillNB g p k ys            = fill1 g p k ys
+
+fillNBE g k y ys           = nilBeside g (fill1 g (oneLiner (reduceDoc y)) k1 ys)
                              `mkUnion` 
-                             nilAboveNest False k (fill g (y:ys))
+                             nilAboveNest True k (fill g (y:ys))
                            where
                              k1 | g         = k - 1
                                 | otherwise = k
-
-fillNB g p k ys            = fill1 g p k ys
-
 
 -- ---------------------------------------------------------------------------
 -- Selecting the best layout
@@ -1020,32 +1036,23 @@ multi_ch n       ch = ch : multi_ch (n - 1) ch
 
 -- (spaces n) generates a list of n spaces
 --
--- It should never be called with 'n' < 0, but that can happen for reasons I don't understand
--- Here's a test case:
---	ncat x y = nest 4 $ cat [ x, y ]
---	d1 = foldl1 ncat $ take 50 $ repeat $ char 'a'
---	d2 = parens $  sep [ d1, text "+" , d1 ]
---	main = print d2
--- I don't feel motivated enough to find the Real Bug, so meanwhile we just test for n<=0
+-- returns the empty string on negative argument.
+--
 spaces :: Int -> String
 spaces n | n <= 0    = ""
 	 | otherwise = ' ' : spaces (n - 1)
 
-{- Comments from Johannes Waldmann about what the problem might be:
+{-
+Concerning negative indentation:
+If we compose a <> b, and the first line of b is deeply nested, but other lines of b are not,
+then, because <> eats the nest, the pretty printer will try to layout some of b's lines with
+negative indentation:
 
-   In the example above, d2 and d1 are deeply nested, but `text "+"' is not, 
-   so the layout function tries to "out-dent" it.
-   
-   when I look at the Doc values that are generated, there are lots of
-   Nest constructors with negative arguments.  see this sample output of
-   d1 (obtained with hugs, :s -u)
-   
-   tBeside (TextDetails_Chr 'a') 1 Doc_Empty) (Doc_NilAbove (Doc_Nest
-   (-241) (Doc_TextBeside (TextDetails_Chr 'a') 1 Doc_Empty)))))
-   (Doc_NilAbove (Doc_Nest (-236) (Doc_TextBeside (TextDetails_Chr 'a') 1
-   (Doc_NilAbove (Doc_Nest (-5) (Doc_TextBeside (TextDetails_Chr 'a') 1
-   Doc_Empty)))))))) (Doc_NilAbove (Doc_Nest (-231) (Doc_TextBeside
-   (TextDetails_Chr 'a') 1 (Doc_NilAbove (Doc_Nest (-5) (Doc_TextBeside
-   (TextDetails_Chr 'a') 1 (Doc_NilAbove (Doc_Nest (-5) (Doc_TextBeside
-   (TextDetails_Chr 'a') 1 Doc_Empty))))))))))) (Doc_NilAbove (Doc_Nest
+doc       |0123345
+------------------
+d1        |a
+d2        |   b
+          |c
+d1<>d2    |ab
+         c|
 -}
