@@ -174,7 +174,7 @@ module Text.PrettyPrint.HughesPJ (
 
 	-- * Constructing documents
 	-- ** Converting values into documents
-        char, text, ptext,
+        char, text, ptext, zeroWidthText,
         int, integer, float, double, rational,
 
 	-- ** Simple derived documents
@@ -259,6 +259,10 @@ text	 :: String   -> Doc
 
 -- | An obsolete function, now identical to 'text'.
 ptext	 :: String   -> Doc
+
+-- | Some text, but without any width. Use for non-printing text
+-- such as a HTML or Latex tags
+zeroWidthText :: String   -> Doc
 
 int      :: Int      -> Doc;	-- ^ @int n = text (show n)@
 integer  :: Integer  -> Doc;	-- ^ @integer n = text (show n)@
@@ -608,6 +612,7 @@ isEmpty _     = False
 char  c = textBeside_ (Chr c) 1 Empty
 text  s = case length s of {sl -> textBeside_ (Str s)  sl Empty}
 ptext s = case length s of {sl -> textBeside_ (PStr s) sl Empty}
+zeroWidthText s = textBeside_ (Str s) 0 Empty
 
 nest k  p = mkNest k (reduceDoc p)        -- Externally callable version
 
