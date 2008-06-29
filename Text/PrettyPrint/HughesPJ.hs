@@ -811,6 +811,7 @@ fillNB g Empty k (Empty:ys)  = fillNB g Empty k ys
 fillNB g Empty k (y:ys)    = fillNBE g k y ys
 fillNB g p k ys            = fill1 g p k ys
 
+fillNBE :: Bool -> Int -> Doc -> [Doc] -> Doc
 fillNBE g k y ys           = nilBeside g (fill1 g (oneLiner (reduceDoc y)) k1 ys)
                              `mkUnion` 
                              nilAboveNest True k (fill g (y:ys))
