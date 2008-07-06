@@ -831,7 +831,8 @@ fillNBE g k y ys           = nilBeside g (fill1 g ((elideNest . oneLiner . reduc
                              k1 | g         = k - 1
                                 | otherwise = k
 
-elideNest (Nest k d) = d
+elideNest :: Doc -> Doc
+elideNest (Nest _ d) = d
 elideNest d = d
 
 -- ---------------------------------------------------------------------------
@@ -1056,7 +1057,9 @@ multi_ch n       ch = ch : multi_ch (n - 1) ch
 --
 spaces :: Int -> String
 spaces n
- -- | n  < 0    = trace "Warning: negative indentation" ""
+ {-
+ | n  < 0    = trace "Warning: negative indentation" ""
+ -}
  | n <= 0    = ""
  | otherwise = ' ' : spaces (n - 1)
 
