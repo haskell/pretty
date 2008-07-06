@@ -763,7 +763,7 @@ sep1 _ (Beside {})         _ _  = error "sep1 Beside"
 
 sepNB :: Bool -> Doc -> Int -> [Doc] -> Doc
 
-sepNB g (Nest _ p)  k ys  = sepNB g p k ys
+sepNB g (Nest _ p)  k ys  = sepNB g p k ys -- Never triggered, because of invariant (2)
 
 sepNB g Empty k ys        = oneLiner (nilBeside g (reduceDoc rest))
                                 `mkUnion` 
@@ -780,13 +780,20 @@ sepNB g p k ys            = sep1 g p k ys
 fsep = fill True
 fcat = fill False
 
--- Specification: 
---   fill []  = empty
---   fill [p] = p
---   fill (p1:p2:ps) = oneLiner p1 <#> nest (length p1) 
---                                          (fill (oneLiner p2 : ps))
---                     `union`
---                      p1 $$ fill ps
+-- Specification:
+--
+-- fill g docs = fillIndent 0 docs
+--
+-- fillIndent k [] = []
+-- fillIndent k [p] = p
+-- fillIndent k (p1:p2:ps) =
+--    oneLiner p1 <g> fillIndent (k + length p1 + g ? 1 : 0) (remove_nests (oneLiner p2) : ps)
+--     `Union`
+--    (p1 $*$ nest (-k) (fillIndent 0 ps))
+--
+-- $*$ is defined for layouts (not Docs) as
+-- layout1 $*$ layout2 | hasMoreThanOneLine layout1 = layout1 $$ layout2
+--                     | otherwise                  = layout1 $+$ layout2
 
 fill :: Bool -> [Doc] -> RDoc
 fill _ []     = empty
@@ -810,19 +817,22 @@ fill1 _ (Beside {})         _ _  = error "fill1 Beside"
 
 fillNB :: Bool -> Doc -> Int -> [Doc] -> Doc
 fillNB _ _           k _  | k `seq` False = undefined
-fillNB g (Nest _ p)  k ys  = fillNB g p k ys
+fillNB g (Nest _ p)  k ys  = fillNB g p k ys -- Never triggered, because of invariant (2)
 fillNB _ Empty _ []        = Empty
 fillNB g Empty k (Empty:ys)  = fillNB g Empty k ys
 fillNB g Empty k (y:ys)    = fillNBE g k y ys
 fillNB g p k ys            = fill1 g p k ys
 
 fillNBE :: Bool -> Int -> Doc -> [Doc] -> Doc
-fillNBE g k y ys           = nilBeside g (fill1 g (oneLiner (reduceDoc y)) k1 ys)
+fillNBE g k y ys           = nilBeside g (fill1 g ((elideNest . oneLiner . reduceDoc) y) k1 ys)
                              `mkUnion` 
                              nilAboveNest True k (fill g (y:ys))
                            where
                              k1 | g         = k - 1
                                 | otherwise = k
+
+elideNest (Nest k d) = d
+elideNest d = d
 
 -- ---------------------------------------------------------------------------
 -- Selecting the best layout
