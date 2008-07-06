@@ -554,29 +554,29 @@ nl_text    = Chr '\n'
 {-
   Here are the invariants:
   
-  * The argument of NilAbove is never Empty. Therefore
-    a NilAbove occupies at least two lines.
+  1) The argument of NilAbove is never Empty. Therefore
+     a NilAbove occupies at least two lines.
   
-  * The argument of @TextBeside@ is never @Nest@.
+  2) The argument of @TextBeside@ is never @Nest@.
   
   
-  * The layouts of the two arguments of @Union@ both flatten to the same 
-    string.
+  3) The layouts of the two arguments of @Union@ both flatten to the same 
+     string.
   
-  * The arguments of @Union@ are either @TextBeside@, or @NilAbove@.
+  4) The arguments of @Union@ are either @TextBeside@, or @NilAbove@.
   
-  * A @NoDoc@ may only appear on the first line of the left argument of an 
-    union. Therefore, the right argument of an union can never be equivalent
-    to the empty set (@NoDoc@).
+  5) A @NoDoc@ may only appear on the first line of the left argument of an 
+     union. Therefore, the right argument of an union can never be equivalent
+     to the empty set (@NoDoc@).
   
-  * An empty document is always represented by @Empty@.  It can't be
-    hidden inside a @Nest@, or a @Union@ of two @Empty@s.
+  6) An empty document is always represented by @Empty@.  It can't be
+     hidden inside a @Nest@, or a @Union@ of two @Empty@s.
   
-  * The first line of every layout in the left argument of @Union@ is
-    longer than the first line of any layout in the right argument.
-    (1) ensures that the left argument has a first line.  In view of
-    (3), this invariant means that the right argument must have at
-    least two lines.
+  7) The first line of every layout in the left argument of @Union@ is
+     longer than the first line of any layout in the right argument.
+     (1) ensures that the left argument has a first line.  In view of
+     (3), this invariant means that the right argument must have at
+     least two lines.
 -}
 
 -- Invariant: Args to the 4 functions below are always RDocs
@@ -844,7 +844,7 @@ best :: Mode
      -> RDoc            -- No unions in here!
 
 best OneLineMode _ _ p0
-  = get p0
+  = get p0 -- unused, due to the use of easy_display in full_render
   where
     get Empty               = Empty
     get NoDoc               = NoDoc
@@ -915,7 +915,7 @@ minn x y | x < y    = x
 -- @first@ returns its first argument if it is non-empty, otherwise its second.
 
 first :: Doc -> Doc -> Doc
-first p q | nonEmptySet p = p 
+first p q | nonEmptySet p = p -- unused, because (get OneLineMode) is unused
           | otherwise     = q
 
 nonEmptySet :: Doc -> Bool
@@ -1055,20 +1055,38 @@ multi_ch n       ch = ch : multi_ch (n - 1) ch
 -- returns the empty string on negative argument.
 --
 spaces :: Int -> String
-spaces n | n <= 0    = ""
-	 | otherwise = ' ' : spaces (n - 1)
+spaces n
+ -- | n  < 0    = trace "Warning: negative indentation" ""
+ | n <= 0    = ""
+ | otherwise = ' ' : spaces (n - 1)
 
 {-
-Concerning negative indentation:
-If we compose a <> b, and the first line of b is deeply nested, but other lines of b are not,
-then, because <> eats the nest, the pretty printer will try to layout some of b's lines with
-negative indentation:
+Q: What is the reason for negative indentation (i.e. argument to indent
+   is < 0) ?
+
+A:
+This indicates an error in the library client's code.
+If we compose a <> b, and the first line of b is more indented than some
+other lines of b, the law <n6> (<> eats nests) may cause the pretty
+printer to produce an invalid layout:
 
 doc       |0123345
 ------------------
-d1        |a
-d2        |   b
-          |c
-d1<>d2    |ab
-         c|
+d1        |a...|
+d2        |...b|
+          |c...|
+
+d1<>d2    |ab..|
+         c|....|
+
+Consider a <> b, let `s' be the length of the last line of `a', `k' the
+indentation of the first line of b, and `k0' the indentation of the
+left-most line b_i of b.
+
+The produced layout will have negative indentation if `k - k0 > s', as
+the first line of b will be put on the (s+1)th column, effectively
+translating b horizontally by (k-s). Now if the i^th line of b has an
+indentation k0 < (k-s), it is translated out-of-page, causing
+`negative indentation'.
 -}
+
