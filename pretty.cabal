@@ -4,8 +4,10 @@ license:	BSD3
 license-file:	LICENSE
 maintainer:	libraries@haskell.org
 synopsis:	Pretty-printing library
+category:       Text
 description:
-	This package contains a pretty-printing library.
+	This package contains John Hughes's pretty-printing library,
+        heavily modified by Simon Peyton Jones.
 build-type: Simple
 exposed-modules:
 	Text.PrettyPrint
