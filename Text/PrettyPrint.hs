@@ -18,5 +18,4 @@ module Text.PrettyPrint (
  	module Text.PrettyPrint.HughesPJ
  ) where
 
-import Prelude
 import Text.PrettyPrint.HughesPJ
