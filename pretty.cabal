@@ -16,7 +16,7 @@ Library
     exposed-modules:
         Text.PrettyPrint
         Text.PrettyPrint.HughesPJ
-    build-depends: base
+    build-depends: base >= 3 && < 5
 
 source-repository head
     type:     darcs
