@@ -494,7 +494,7 @@ braces p        = char '{' <> p <> char '}'
 -- lazy list versions
 hcat = reduceAB . foldr (beside_' False) empty
 hsep = reduceAB . foldr (beside_' True)  empty
-vcat = reduceAB . foldr (above_' True) empty
+vcat = reduceAB . foldr (above_' False) empty
 
 beside_' :: Bool -> Doc -> Doc -> Doc
 beside_' _ p Empty = p
