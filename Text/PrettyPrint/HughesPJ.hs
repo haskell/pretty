@@ -214,6 +214,7 @@ module Text.PrettyPrint.HughesPJ (
 
 
 import Prelude
+import Data.Monoid ( Monoid(mempty, mappend) )
 import Data.String ( IsString(fromString) )
 
 infixl 6 <> 
@@ -281,6 +282,10 @@ quotes	     :: Doc -> Doc;	-- ^ Wrap document in @\'...\'@
 doubleQuotes :: Doc -> Doc;	-- ^ Wrap document in @\"...\"@
 
 -- Combining @Doc@ values
+
+instance Monoid Doc where
+    mempty  = empty
+    mappend = (<>)
 
 -- | Beside.
 -- '<>' is associative, with identity 'empty'.
