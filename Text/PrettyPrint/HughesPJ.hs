@@ -214,6 +214,7 @@ module Text.PrettyPrint.HughesPJ (
 
 
 import Prelude
+import Data.String ( IsString(fromString) )
 
 infixl 6 <> 
 infixl 6 <+>
@@ -256,6 +257,9 @@ char 	 :: Char     -> Doc
 -- The side condition on the last law is necessary because @'text' \"\"@
 -- has height 1, while 'empty' has no height.
 text	 :: String   -> Doc
+
+instance IsString Doc where
+    fromString = text
 
 -- | An obsolete function, now identical to 'text'.
 ptext	 :: String   -> Doc
