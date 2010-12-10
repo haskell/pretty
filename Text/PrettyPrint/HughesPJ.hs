@@ -160,8 +160,10 @@ Relative to John's original paper, there are the following new features:
                 * a standard one
                 * one that uses cut-marks to avoid deeply-nested documents
                         simply piling up in the right-hand margin
-                * one that ignores indentation (fewer chars output; good for machines)
-                * one that ignores indentation and newlines (ditto, only more so)
+                * one that ignores indentation
+                        (fewer chars output; good for machines)
+                * one that ignores indentation and newlines
+                        (ditto, only more so)
 
 6.      Numerous implementation tidy-ups
         Use of unboxed data types to speed up the implementation
@@ -548,7 +550,8 @@ data Doc
  | Beside Doc Bool Doc                  -- True <=> space between
  | Above  Doc Bool Doc                  -- True <=> never overlap
 
-type RDoc = Doc         -- RDoc is a "reduced Doc", guaranteed not to have a top-level Above or Beside
+-- RDoc is a "reduced Doc", guaranteed not to have a top-level Above or Beside
+type RDoc = Doc
 
 
 reduceDoc :: Doc -> RDoc
@@ -688,12 +691,13 @@ nilAboveNest :: Bool -> Int -> RDoc -> RDoc
 --              = text s <> (text "" $g$ nest k q)
 
 nilAboveNest _ k _           | k `seq` False = undefined
-nilAboveNest _ _ Empty       = Empty    -- Here's why the "text s <>" is in the spec!
+nilAboveNest _ _ Empty       = Empty
+                               -- Here's why the "text s <>" is in the spec!
 nilAboveNest g k (Nest k1 q) = nilAboveNest g (k + k1) q
 
-nilAboveNest g k q           | (not g) && (k > 0)        -- No newline if no overlap
+nilAboveNest g k q           | not g && k > 0      -- No newline if no overlap
                              = textBeside_ (Str (indent k)) k q
-                             | otherwise                        -- Put them really above
+                             | otherwise           -- Put them really above
                              = nilAbove_ (mkNest k q)
 
 -- ---------------------------------------------------------------------------
@@ -711,12 +715,12 @@ beside :: Doc -> Bool -> RDoc -> RDoc
 -- Specification: beside g p q = p <g> q
 
 beside NoDoc               _ _   = NoDoc
-beside (p1 `Union` p2)     g q   = (beside p1 g q) `union_` (beside p2 g q)
+beside (p1 `Union` p2)     g q   = beside p1 g q `union_` beside p2 g q
 beside Empty               _ q   = q
 beside (Nest k p)          g q   = nest_ k (beside p g q)       -- p non-empty
 beside p@(Beside p1 g1 q1) g2 q2
            {- (A `op1` B) `op2` C == A `op1` (B `op2` C)  iff op1 == op2
-                                                 [ && (op1 == <> || op1 == <+>) ] -}
+                                             [ && (op1 == <> || op1 == <+>) ] -}
          | g1 == g2              = beside p1 g1 (beside q1 g2 q2)
          | otherwise             = beside (reduceDoc p) g2 q2
 beside p@(Above _ _ _)     g q   = beside (reduceDoc p) g q
@@ -761,12 +765,13 @@ sep1 _ _                   k _  | k `seq` False = undefined
 sep1 _ NoDoc               _ _  = NoDoc
 sep1 g (p `Union` q)       k ys = sep1 g p k ys
                                   `union_`
-                                  (aboveNest q False k (reduceDoc (vcat ys)))
+                                  aboveNest q False k (reduceDoc (vcat ys))
 
 sep1 g Empty               k ys = mkNest k (sepX g ys)
 sep1 g (Nest n p)          k ys = nest_ n (sep1 g p (k - n) ys)
 
-sep1 _ (NilAbove p)        k ys = nilAbove_ (aboveNest p False k (reduceDoc (vcat ys)))
+sep1 _ (NilAbove p)        k ys = nilAbove_
+                                  (aboveNest p False k (reduceDoc (vcat ys)))
 sep1 g (TextBeside s sl p) k ys = textBeside_ s sl (sepNB g p (k - sl) ys)
 sep1 _ (Above {})          _ _  = error "sep1 Above"
 sep1 _ (Beside {})         _ _  = error "sep1 Beside"
@@ -777,7 +782,8 @@ sep1 _ (Beside {})         _ _  = error "sep1 Beside"
 
 sepNB :: Bool -> Doc -> Int -> [Doc] -> Doc
 
-sepNB g (Nest _ p)  k ys  = sepNB g p k ys -- Never triggered, because of invariant (2)
+sepNB g (Nest _ p)  k ys  = sepNB g p k ys
+                            -- Never triggered, because of invariant (2)
 
 sepNB g Empty k ys        = oneLiner (nilBeside g (reduceDoc rest))
                                 `mkUnion`
@@ -801,7 +807,8 @@ fcat = fill False
 -- fillIndent k [] = []
 -- fillIndent k [p] = p
 -- fillIndent k (p1:p2:ps) =
---    oneLiner p1 <g> fillIndent (k + length p1 + g ? 1 : 0) (remove_nests (oneLiner p2) : ps)
+--    oneLiner p1 <g> fillIndent (k + length p1 + g ? 1 : 0)
+--                               (remove_nests (oneLiner p2) : ps)
 --     `Union`
 --    (p1 $*$ nest (-k) (fillIndent 0 ps))
 --
@@ -819,7 +826,7 @@ fill1 _ _                   k _  | k `seq` False = undefined
 fill1 _ NoDoc               _ _  = NoDoc
 fill1 g (p `Union` q)       k ys = fill1 g p k ys
                                    `union_`
-                                   (aboveNest q False k (fill g ys))
+                                   aboveNest q False k (fill g ys)
 
 fill1 g Empty               k ys = mkNest k (fill g ys)
 fill1 g (Nest n p)          k ys = nest_ n (fill1 g p (k - n) ys)
@@ -831,14 +838,17 @@ fill1 _ (Beside {})         _ _  = error "fill1 Beside"
 
 fillNB :: Bool -> Doc -> Int -> [Doc] -> Doc
 fillNB _ _           k _  | k `seq` False = undefined
-fillNB g (Nest _ p)  k ys  = fillNB g p k ys -- Never triggered, because of invariant (2)
+fillNB g (Nest _ p)  k ys  = fillNB g p k ys
+                             -- Never triggered, because of invariant (2)
 fillNB _ Empty _ []        = Empty
 fillNB g Empty k (Empty:ys)  = fillNB g Empty k ys
 fillNB g Empty k (y:ys)    = fillNBE g k y ys
 fillNB g p k ys            = fill1 g p k ys
 
 fillNBE :: Bool -> Int -> Doc -> [Doc] -> Doc
-fillNBE g k y ys           = nilBeside g (fill1 g ((elideNest . oneLiner . reduceDoc) y) k1 ys)
+fillNBE g k y ys           = nilBeside g
+                             (fill1 g ((elideNest . oneLiner . reduceDoc) y)
+                                      k1 ys)
                              `mkUnion`
                              nilAboveNest True k (fill g (y:ys))
                            where
@@ -978,8 +988,10 @@ string_txt (Str s1)  s2 = s1 ++ s2
 string_txt (PStr s1) s2 = s1 ++ s2
 
 
-fullRender OneLineMode _ _ txt end doc = easy_display space_text txt end (reduceDoc doc)
-fullRender LeftMode    _ _ txt end doc = easy_display nl_text    txt end (reduceDoc doc)
+fullRender OneLineMode _ _ txt end doc
+  = easy_display space_text txt end (reduceDoc doc)
+fullRender LeftMode    _ _ txt end doc
+  = easy_display nl_text    txt end (reduceDoc doc)
 
 fullRender the_mode line_length ribbons_per_line txt end doc
   = display the_mode line_length ribbon_length txt end best_doc
@@ -1012,14 +1024,14 @@ display the_mode page_width ribbon_width txt end doc
                     ZigZagMode |  k >= gap_width
                                -> nl_text `txt` (
                                   Str (replicate shift '/') `txt` (
-                                  nl_text `txt` (
-                                  lay1 (k - shift) s sl p)))
+                                  nl_text `txt`
+                                  lay1 (k - shift) s sl p ))
 
                                |  k < 0
                                -> nl_text `txt` (
                                   Str (replicate shift '\\') `txt` (
-                                  nl_text `txt` (
-                                  lay1 (k + shift) s sl p )))
+                                  nl_text `txt`
+                                  lay1 (k + shift) s sl p ))
 
                     _ -> lay1 k s sl p
 
@@ -1028,7 +1040,7 @@ display the_mode page_width ribbon_width txt end doc
 
         lay2 k _ | k `seq` False = undefined
         lay2 k (NilAbove p)        = nl_text `txt` lay k p
-        lay2 k (TextBeside s sl p) = s `txt` (lay2 (k + sl) p)
+        lay2 k (TextBeside s sl p) = s `txt` lay2 (k + sl) p
         lay2 k (Nest _ p)          = lay2 k p
         lay2 _ Empty               = end
         lay2 _ (Above {})          = error "display lay2 Above"
@@ -1047,10 +1059,12 @@ easy_display nl_space_text txt end doc
   = lay doc cant_fail
   where
     lay NoDoc               no_doc = no_doc
-    lay (Union _p q)        _      = {- lay p -} (lay q cant_fail)              -- Second arg can't be NoDoc
+    lay (Union _p q)        _      = {- lay p -} lay q cant_fail
+        -- Second arg can't be NoDoc
     lay (Nest _ p)          no_doc = lay p no_doc
     lay Empty               _      = end
-    lay (NilAbove p)        _      = nl_space_text `txt` lay p cant_fail      -- NoDoc always on first line
+    lay (NilAbove p)        _      = nl_space_text `txt` lay p cant_fail
+        -- NoDoc always on first line
     lay (TextBeside s _ p)  no_doc = s `txt` lay p no_doc
     lay (Above {}) _ = error "easy_display Above"
     lay (Beside {}) _ = error "easy_display Beside"
