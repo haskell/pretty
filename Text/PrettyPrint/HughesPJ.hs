@@ -692,7 +692,7 @@ nilAboveNest _ _ Empty       = Empty    -- Here's why the "text s <>" is in the 
 nilAboveNest g k (Nest k1 q) = nilAboveNest g (k + k1) q
 
 nilAboveNest g k q           | (not g) && (k > 0)        -- No newline if no overlap
-                             = textBeside_ (Str (spaces k)) k q
+                             = textBeside_ (Str (indent k)) k q
                              | otherwise                        -- Put them really above
                              = nilAbove_ (mkNest k q)
 
@@ -1011,13 +1011,13 @@ display the_mode page_width ribbon_width txt end doc
             = case the_mode of
                     ZigZagMode |  k >= gap_width
                                -> nl_text `txt` (
-                                  Str (multi_ch shift '/') `txt` (
+                                  Str (replicate shift '/') `txt` (
                                   nl_text `txt` (
                                   lay1 (k - shift) s sl p)))
 
                                |  k < 0
                                -> nl_text `txt` (
-                                  Str (multi_ch shift '\\') `txt` (
+                                  Str (replicate shift '\\') `txt` (
                                   nl_text `txt` (
                                   lay1 (k + shift) s sl p )))
 
@@ -1055,27 +1055,9 @@ easy_display nl_space_text txt end doc
     lay (Above {}) _ = error "easy_display Above"
     lay (Beside {}) _ = error "easy_display Beside"
 
--- OLD version: we shouldn't rely on tabs being 8 columns apart in the output.
--- indent n | n >= 8 = '\t' : indent (n - 8)
---          | otherwise      = spaces n
+-- an old version inserted tabs being 8 columns apart in the output.
 indent :: Int -> String
-indent n = spaces n
-
-multi_ch :: Int -> Char -> String
-multi_ch 0 _ = ""
-multi_ch n       ch = ch : multi_ch (n - 1) ch
-
--- (spaces n) generates a list of n spaces
---
--- returns the empty string on negative argument.
---
-spaces :: Int -> String
-spaces n
- {-
- | n  < 0    = trace "Warning: negative indentation" ""
- -}
- | n <= 0    = ""
- | otherwise = ' ' : spaces (n - 1)
+indent n = replicate n ' '
 
 {-
 Q: What is the reason for negative indentation (i.e. argument to indent
