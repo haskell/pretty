@@ -19,6 +19,6 @@ Library
     build-depends: base >= 3 && < 5
 
 source-repository head
-    type:     darcs
-    location: http://darcs.haskell.org/packages/pretty/
+    type:     git
+    location: http://darcs.haskell.org/packages/pretty.git/
 
