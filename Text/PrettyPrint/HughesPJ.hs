@@ -31,7 +31,7 @@ Version 3.0     28 May 1997
     chains.
 
     This is really bad news.  One thing a pretty-printer abstraction
-    should certainly guarantee is insensivity to associativity.  It
+    should certainly guarantee is insensitivity to associativity.  It
     matters: suddenly GHC's compilation times went up by a factor of
     100 when I switched to the new pretty printer.
 
@@ -116,8 +116,8 @@ Relative to John's original paper, there are the following new features:
 
         sep (separate) is either like hsep or like vcat, depending on what fits
 
-        cat  behaves like sep,  but it uses <> for horizontal conposition
-        fcat behaves like fsep, but it uses <> for horizontal conposition
+        cat  behaves like sep,  but it uses <> for horizontal composition
+        fcat behaves like fsep, but it uses <> for horizontal composition
 
         These new ones do the obvious things:
                 char, semi, comma, colon, space,
@@ -563,7 +563,7 @@ reduceDoc p              = p
 
 -- | The TextDetails data type
 --
--- A TextDetails represents a *fragement* of text that will be
+-- A TextDetails represents a fragment of text that will be
 -- output at some point.
 data TextDetails = Chr  Char   -- ^ A single Char fragment
                  | Str  String -- ^ A whole String fragment
