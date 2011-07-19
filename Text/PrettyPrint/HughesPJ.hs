@@ -173,7 +173,7 @@ Relative to John's original paper, there are the following new features:
 module Text.PrettyPrint.HughesPJ (
 
         -- * The document type
-        Doc,            -- Abstract
+        Doc,
 
         -- * Constructing documents
 
@@ -373,13 +373,13 @@ instance Show Doc where
 render     :: Doc -> String
 
 -- | The general rendering interface.
-fullRender :: Mode                      -- ^Rendering mode
-           -> Int                       -- ^Line length
-           -> Float                     -- ^Ribbons per line
-           -> (TextDetails -> a -> a)   -- ^What to do with text
-           -> a                         -- ^What to do at the end
-           -> Doc                       -- ^The document
-           -> a                         -- ^Result
+fullRender :: Mode                      -- ^ Rendering mode
+           -> Int                       -- ^ Line length
+           -> Float                     -- ^ Ribbons per line
+           -> (TextDetails -> a -> a)   -- ^ What to do with text
+           -> a                         -- ^ What to do at the end
+           -> Doc                       -- ^ The document
+           -> a                         -- ^ Result
 
 -- | Render the document as a string using a specified style.
 renderStyle  :: Style -> Doc -> String
@@ -396,10 +396,10 @@ style :: Style
 style = Style { lineLength = 100, ribbonsPerLine = 1.5, mode = PageMode }
 
 -- | Rendering mode.
-data Mode = PageMode            -- ^Normal
-          | ZigZagMode          -- ^With zig-zag cuts
-          | LeftMode            -- ^No indentation, infinitely long lines
-          | OneLineMode         -- ^All on one line
+data Mode = PageMode            -- ^ Normal
+          | ZigZagMode          -- ^ With zig-zag cuts
+          | LeftMode            -- ^ No indentation, infinitely long lines
+          | OneLineMode         -- ^ All on one line
 
 -- ---------------------------------------------------------------------------
 -- The Doc calculus
@@ -561,9 +561,16 @@ reduceDoc (Above  p g q) = above  p g (reduceDoc q)
 reduceDoc p              = p
 
 
-data TextDetails = Chr  Char
-                 | Str  String
-                 | PStr String
+-- | The TextDetails data type
+--
+-- A TextDetails represents a *fragement* of text that will be
+-- output at some point.
+data TextDetails = Chr  Char   -- ^ A single Char fragment
+                 | Str  String -- ^ A whole String fragment
+                 | PStr String -- ^ Used to represent a Fast String fragment
+                               --   but now deprecated and identical to the
+                               --   Str constructor.
+
 space_text, nl_text :: TextDetails
 space_text = Chr ' '
 nl_text    = Chr '\n'

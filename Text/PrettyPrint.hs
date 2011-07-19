@@ -11,13 +11,56 @@
 -- The default interface to the pretty-printing library. Provides a collection
 -- of pretty printer combinators.
 --
--- This should be used as opposed to the "Text.PrettyPrint.HughesPJ" module that
--- contains the actual implementation that this module simply re-exports.
+-- This module should be used as opposed to the "Text.PrettyPrint.HughesPJ"
+-- module. Both are equivalent though as this module simply re-exports the
+-- other.
 --
 -----------------------------------------------------------------------------
 
 module Text.PrettyPrint ( 
-        module Text.PrettyPrint.HughesPJ
+
+        -- * The document type
+        Doc,
+
+        -- * Constructing documents
+
+        -- ** Converting values into documents
+        char, text, ptext, sizedText, zeroWidthText,
+        int, integer, float, double, rational,
+
+        -- ** Simple derived documents
+        semi, comma, colon, space, equals,
+        lparen, rparen, lbrack, rbrack, lbrace, rbrace,
+
+        -- ** Wrapping documents in delimiters
+        parens, brackets, braces, quotes, doubleQuotes,
+
+        -- ** Combining documents
+        empty,
+        (<>), (<+>), hcat, hsep,
+        ($$), ($+$), vcat,
+        sep, cat,
+        fsep, fcat,
+        nest,
+        hang, punctuate,
+
+        -- * Predicates on documents
+        isEmpty,
+
+        -- * Rendering documents
+
+        -- ** Default rendering
+        render,
+
+        -- ** Rendering with a particular style
+        Style(..),
+        style,
+        renderStyle,
+
+        -- ** General rendering
+        fullRender,
+        Mode(..), TextDetails(..)
+
     ) where
 
 import Text.PrettyPrint.HughesPJ
