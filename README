@@ -1,0 +1,9 @@
+This repository contains John Hughes's pretty-printing library.
+A Haskell library for pretty printing, useful in compilers and
+other such tools. It has been heavily modified by Simon Peyton
+Jones from John Hughe's original design.
+
+The library uses the Cabal build system, so building is simply
+a matter of running 'cabal install' or 'cabal configure &&
+cabal build'.
+
