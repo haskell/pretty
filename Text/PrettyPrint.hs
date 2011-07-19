@@ -4,18 +4,21 @@
 -- Copyright   :  (c) The University of Glasgow 2001
 -- License     :  BSD-style (see the file libraries/base/LICENSE)
 -- 
--- Maintainer  :  libraries@haskell.org
--- Stability   :  experimental
+-- Maintainer  :  David Terei <dave.terei@gmail.com>
+-- Stability   :  stable
 -- Portability :  portable
 --
--- Re-export of "Text.PrettyPrint.HughesPJ" to provide a default
--- pretty-printing library.  Marked experimental at the moment; the 
--- default library might change at a later date.
+-- The default interface to the pretty-printing library. Provides a collection
+-- of pretty printer combinators.
+--
+-- This should be used as opposed to the "Text.PrettyPrint.HughesPJ" module that
+-- contains the actual implementation that this module simply re-exports.
 --
 -----------------------------------------------------------------------------
 
 module Text.PrettyPrint ( 
- 	module Text.PrettyPrint.HughesPJ
- ) where
+        module Text.PrettyPrint.HughesPJ
+    ) where
 
 import Text.PrettyPrint.HughesPJ
+

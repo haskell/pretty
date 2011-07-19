@@ -1,11 +1,12 @@
+{-# OPTIONS_HADDOCK not-home #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Text.PrettyPrint.HughesPJ
 -- Copyright   :  (c) The University of Glasgow 2001
 -- License     :  BSD-style (see the file libraries/base/LICENSE)
 --
--- Maintainer  :  libraries@haskell.org
--- Stability   :  provisional
+-- Maintainer  :  David Terei <dave.terei@gmail.com>
+-- Stability   :  stable
 -- Portability :  portable
 --
 -- John Hughes's and Simon Peyton Jones's Pretty Printer Combinators
@@ -15,7 +16,7 @@
 -- Johan Jeuring and Erik Meijer (eds), LNCS 925
 -- <http://www.cs.chalmers.se/~rjmh/Papers/pretty.ps>
 --
--- Heavily modified by Simon Peyton Jones, Dec 96
+-- Heavily modified by Simon Peyton Jones (December 1996).
 --
 -----------------------------------------------------------------------------
 
@@ -211,9 +212,9 @@ module Text.PrettyPrint.HughesPJ (
 
         -- ** General rendering
         fullRender,
-        Mode(..), TextDetails(..),
+        Mode(..), TextDetails(..)
 
-  ) where
+    ) where
 
 
 import Prelude
