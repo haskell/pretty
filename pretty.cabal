@@ -1,15 +1,15 @@
-name:		pretty
-version:	1.1.0.0
-license:	BSD3
-license-file:	LICENSE
-maintainer:	libraries@haskell.org
-bug-reports: http://hackage.haskell.org/trac/ghc/newticket?component=libraries/pretty
-synopsis:	Pretty-printing library
-category:       Text
+name:          pretty
+version:       1.1.0.0
+license:       BSD3
+license-file:  LICENSE
+maintainer:    David Terei <dave.terei@gmail.com>
+bug-reports:   http://hackage.haskell.org/trac/ghc/newticket?component=libraries/pretty
+synopsis:      Pretty-printing library
+category:      Text
 description:
-	This package contains John Hughes's pretty-printing library,
+        This package contains John Hughes's pretty-printing library,
         heavily modified by Simon Peyton Jones.
-build-type: Simple
+build-type:    Simple
 Cabal-Version: >= 1.6
 
 Library
@@ -20,5 +20,5 @@ Library
 
 source-repository head
     type:     git
-    location: http://darcs.haskell.org/packages/pretty.git/
+    location: http://github.com/haskell/pretty.git
 
