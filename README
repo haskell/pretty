@@ -1,3 +1,5 @@
+Pretty : A Haskell Pretty-printer library
+------------------------------------------------------------------------------
 This repository contains a pretty-printing library, a set of API's that
 provides a way to easily print out text in a consistent format of your
 choosing. This is useful for compilers and related tools. The library was
