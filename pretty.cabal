@@ -25,6 +25,7 @@ Library
         Text.PrettyPrint
         Text.PrettyPrint.HughesPJ
     build-depends: base >= 3 && < 5
+    extensions: CPP
 
 source-repository head
     type:     git
