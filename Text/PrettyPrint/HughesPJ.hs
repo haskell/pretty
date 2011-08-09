@@ -1,7 +1,7 @@
+{-# OPTIONS_HADDOCK not-home #-}
 #if __GLASGOW_HASKELL__ >= 701
 {-# LANGUAGE Safe #-}
 #endif
-{-# OPTIONS_HADDOCK not-home #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Text.PrettyPrint.HughesPJ
