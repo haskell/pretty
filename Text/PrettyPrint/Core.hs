@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns, CPP #-}
+{-# LANGUAGE BangPatterns #-}
 #if __GLASGOW_HASKELL__ >= 701
 {-# LANGUAGE Safe #-}
 #endif
@@ -603,7 +603,8 @@ sepNB g (Nest _ p) k ys
   = sepNB g p k ys -- Never triggered, because of invariant (2)
 sepNB g Empty k ys
   = oneLiner (nilBeside g (reduceDoc rest)) `mkUnion`
-    nilAboveNest True k (reduceDoc (vcat ys))
+-- XXX: PRETTY: Used True here
+    nilAboveNest False k (reduceDoc (vcat ys))
   where
     rest | g         = hsep ys
          | otherwise = hcat ys
@@ -663,10 +664,12 @@ fillNB g Empty k (Empty:ys) = fillNB g Empty k ys
 fillNB g Empty k (y:ys)     = fillNBE g k y ys
 fillNB g p k ys             = fill1 g p k ys
 
+
 fillNBE :: DocBase a => Bool -> Int -> GDoc a -> [GDoc a] -> GDoc a
 fillNBE g k y ys
   = nilBeside g (fill1 g ((elideNest . oneLiner . reduceDoc) y) k' ys)
-    `mkUnion` nilAboveNest True k (fill g (y:ys))
+-- XXX: PRETTY: Used True here
+    `mkUnion` nilAboveNest False k (fill g (y:ys))
   where k' = if g then k - 1 else k
 
 elideNest :: DocBase a => GDoc a -> GDoc a
@@ -711,7 +714,7 @@ nicest !w !r p q = nicest1 w r 0 p q
 
 nicest1 :: DocBase a => Int -> Int -> Int -> GDoc a -> GDoc a -> GDoc a
 nicest1 !w !r !sl p q | fits ((w `min` r) - sl) p = p
-                      | otherwise                  = q
+                      | otherwise                 = q
 
 fits :: DocBase a
      => Int  -- Space available

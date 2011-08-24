@@ -6,13 +6,19 @@
 -- |
 -- Module      :  Text.PrettyPrint.HughesPJ
 -- Copyright   :  (c) The University of Glasgow 2001
--- License     :  BSD-style (see the file libraries/base/LICENSE)
+-- License     :  BSD-style (see the file LICENSE)
 --
 -- Maintainer  :  David Terei <dave.terei@gmail.com>
 -- Stability   :  stable
 -- Portability :  portable
 --
 -- John Hughes's and Simon Peyton Jones's Pretty Printer Combinators
+--
+-- NOTE: This module is deprecated. Please use @Text.PrettyPrint@ instead
+-- as a drop in replacement. Or for more customisation please use
+-- @Text.PrettyPrint.Core@. Note though that this module is no longer
+-- compatible with @Text.PrettyPrint@. The two modules provide the same
+-- API but not the same implementation.
 --
 -- Based on /The Design of a Pretty-printing Library/
 -- in Advanced Functional Programming,
@@ -173,7 +179,9 @@ Relative to John's original paper, there are the following new features:
         Use of unboxed data types to speed up the implementation
 -}
 
-module Text.PrettyPrint.HughesPJ (
+module Text.PrettyPrint.HughesPJ
+    {-# DEPRECATED "Please use Text.PrettyPrint instead" #-}
+    (
 
         -- * The document type
         Doc,
