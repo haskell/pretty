@@ -1,8 +1,7 @@
 module Main where
 
--- import Text.PrettyPrint.HughesPJ
-import Text.PrettyPrint2
-import Text.PrettyPrint.Internal
+import Text.PrettyPrint.HughesPJ
+-- import Pretty
 
 stuff :: String -> String -> Double -> Rational -> Int -> Int -> Int -> Doc
 stuff s1 s2 d1 r1 i1 i2 i3 =
@@ -29,15 +28,17 @@ doc2 = stuff "aDSAS ADS asdasdsa sdsda xx" "SDAB WEEAA" 1333.212 ((-4)/5) 31 301
 doc3 :: Doc
 doc3 = stuff "ADsAs --____ aDS" "DasSdAB weEAA" 2533.21299 ((-4)/999) 39 399 60
 
+{-
 txt :: TextDetails -> String -> String
 txt (Chr c)   s  = c:s
 txt (Str s1)  s2 = s1 ++ s2
-txt (PStr s1) s2 = s1 ++ s2
+-}
 
 main :: IO ()
 main = do
     putStrLn "==================================================="
     putStrLn $ render doc1
+{-
     putStrLn "==================================================="
     putStrLn $ fullRender PageMode 1000 4 txt "" doc2
     putStrLn "==================================================="
@@ -49,6 +50,7 @@ main = do
     putStrLn "==================================================="
     putStrLn $ fullRender OneLineMode 1000 4 txt "" doc3
     putStrLn "==================================================="
+-}
     putStrLn $ render doc3
 
 
