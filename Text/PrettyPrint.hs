@@ -5,7 +5,7 @@
 -- |
 -- Module      :  Text.PrettyPrint
 -- Copyright   :  (c) The University of Glasgow 2001
--- License     :  BSD-style (see the file libraries/base/LICENSE)
+-- License     :  BSD-style (see the file LICENSE)
 -- 
 -- Maintainer  :  David Terei <dave.terei@gmail.com>
 -- Stability   :  stable
