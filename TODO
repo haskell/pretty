@@ -1,0 +1,20 @@
+I want to eliminate the duplicate of this library in
+GHC. The underlying TextDetails store types are different
+though which is a problem:
+
+ -> Use type classes (see new-pretty branch).
+    [Duncan not a fan.]
+	 [Make sure performance not lost.]
+
+ -> Use a better underlying storage type.
+    [Say add bytestring and text to TextDetails.]
+
+ -> Use a fixed underlying storage type like
+    Builder from Text or Bytestring but allow
+	 input functions to take any type that can be
+	 converted into one.
+	 [ptext :: (a -> Builder) -> a -> Doc
+
+Also would be useful to provide render functions to produce
+Bytestring / Text builders.
+
