@@ -84,7 +84,7 @@ data TextDetails = Chr  {-# UNPACK #-} !Char
                                --   but now deprecated and identical to the
                                --   Str constructor.
 
-instance DocBase TextDetails where
+instance DocText TextDetails where
     chr = Chr
     str = Str
 
