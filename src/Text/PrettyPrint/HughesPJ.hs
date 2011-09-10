@@ -179,6 +179,7 @@ Relative to John's original paper, there are the following new features:
         Use of unboxed data types to speed up the implementation
 -}
 
+#ifndef TESTING
 module Text.PrettyPrint.HughesPJ
     {-# DEPRECATED "Please use Text.PrettyPrint instead" #-}
     (
@@ -226,7 +227,7 @@ module Text.PrettyPrint.HughesPJ
         Mode(..), TextDetails(..)
 
     ) where
-
+#endif
 
 import Prelude
 import Data.Monoid ( Monoid(mempty, mappend) )
