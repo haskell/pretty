@@ -153,6 +153,12 @@ But it doesn't work, for if x=empty, we would have
                     = text s <> nest (-length s) y
 -}
 
+-- ---------------------------------------------------------------------------
+-- Operator fixity
+
+infixl 6 <>
+infixl 6 <+>
+infixl 5 $$, $+$
 
 -- ---------------------------------------------------------------------------
 -- The Doc data type
