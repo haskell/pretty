@@ -543,6 +543,10 @@ nilAboveNest g k q           | not g && k > 0      -- No newline if no overlap
 -- ---------------------------------------------------------------------------
 -- Horizontal composition @<>@
 
+-- We intentionally avoid Data.Monoid.(<>) here due to interactions of
+-- Data.Monoid.(<>) and (<+>).  See
+-- http://www.haskell.org/pipermail/libraries/2011-November/017066.html
+
 -- | Beside.
 -- '<>' is associative, with identity 'empty'.
 (<>) :: Doc -> Doc -> Doc
