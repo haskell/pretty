@@ -21,8 +21,6 @@
 -- Johan Jeuring and Erik Meijer (eds), LNCS 925
 -- <http://www.cs.chalmers.se/~rjmh/Papers/pretty.ps>
 --
--- Heavily modified by Simon Peyton Jones (December 1996).
---
 -----------------------------------------------------------------------------
 module Text.PrettyPrint.HughesPJ (
 
@@ -78,8 +76,6 @@ import Data.String ( IsString(fromString) )
 
 -- ---------------------------------------------------------------------------
 -- The Doc calculus
-
--- The Doc combinators satisfy the following laws:
 
 {-
 Laws for $$
@@ -177,36 +173,36 @@ data Doc
   | Above Doc Bool Doc                               -- True <=> never overlap
 
 {-
-  Here are the invariants:
+Here are the invariants:
 
-  1) The argument of NilAbove is never Empty. Therefore
-     a NilAbove occupies at least two lines.
+1) The argument of NilAbove is never Empty. Therefore
+   a NilAbove occupies at least two lines.
 
-  2) The argument of @TextBeside@ is never @Nest@.
+2) The argument of @TextBeside@ is never @Nest@.
 
-  3) The layouts of the two arguments of @Union@ both flatten to the same
-     string.
+3) The layouts of the two arguments of @Union@ both flatten to the same
+   string.
 
-  4) The arguments of @Union@ are either @TextBeside@, or @NilAbove@.
+4) The arguments of @Union@ are either @TextBeside@, or @NilAbove@.
 
-  5) A @NoDoc@ may only appear on the first line of the left argument of an
-     union. Therefore, the right argument of an union can never be equivalent
-     to the empty set (@NoDoc@).
+5) A @NoDoc@ may only appear on the first line of the left argument of an
+   union. Therefore, the right argument of an union can never be equivalent
+   to the empty set (@NoDoc@).
 
-  6) An empty document is always represented by @Empty@.  It can't be
-     hidden inside a @Nest@, or a @Union@ of two @Empty@s.
+6) An empty document is always represented by @Empty@.  It can't be
+   hidden inside a @Nest@, or a @Union@ of two @Empty@s.
 
-  7) The first line of every layout in the left argument of @Union@ is
-     longer than the first line of any layout in the right argument.
-     (1) ensures that the left argument has a first line.  In view of
-     (3), this invariant means that the right argument must have at
-     least two lines.
+7) The first line of every layout in the left argument of @Union@ is
+   longer than the first line of any layout in the right argument.
+   (1) ensures that the left argument has a first line.  In view of
+   (3), this invariant means that the right argument must have at
+   least two lines.
 
- Notice the difference between
-         * NoDoc (no documents)
-         * Empty (one empty document; no height and no width)
-         * text "" (a document containing the empty string;
-                    one line high, but has no width)
+Notice the difference between
+   * NoDoc (no documents)
+   * Empty (one empty document; no height and no width)
+   * text "" (a document containing the empty string;
+              one line high, but has no width)
 -}
 
 
@@ -331,7 +327,6 @@ lbrack :: Doc -- ^ A '[' character
 rbrack :: Doc -- ^ A ']' character
 lbrace :: Doc -- ^ A '{' character
 rbrace :: Doc -- ^ A '}' character
-semi   = char ';'
 comma  = char ','
 colon  = char ':'
 space  = char ' '
@@ -503,9 +498,8 @@ above (Above p g1 q1)  g2 q2 = above p g1 (above q1 g2 q2)
 above p@(Beside _ _ _) g  q  = aboveNest (reduceDoc p) g 0 (reduceDoc q)
 above p g q                  = aboveNest p             g 0 (reduceDoc q)
 
-aboveNest :: RDoc a -> Bool -> Int -> RDoc a -> RDoc a
 -- Specfication: aboveNest p g k q = p $g$ (nest k q)
-
+aboveNest :: RDoc a -> Bool -> Int -> RDoc a -> RDoc a
 aboveNest _                   _ k _ | k `seq` False = undefined
 aboveNest NoDoc               _ _ _ = NoDoc
 aboveNest (p1 `Union` p2)     g k q = aboveNest p1 g k q `union_`
@@ -525,15 +519,13 @@ aboveNest (TextBeside s sl p) g k q = textBeside_ s sl rest
 aboveNest (Above {})          _ _ _ = error "aboveNest Above"
 aboveNest (Beside {})         _ _ _ = error "aboveNest Beside"
 
-nilAboveNest :: Bool -> Int -> RDoc a -> RDoc a
 -- Specification: text s <> nilaboveNest g k q
 --              = text s <> (text "" $g$ nest k q)
-
+nilAboveNest :: Bool -> Int -> RDoc a -> RDoc a
 nilAboveNest _ k _           | k `seq` False = undefined
 nilAboveNest _ _ Empty       = Empty
                                -- Here's why the "text s <>" is in the spec!
 nilAboveNest g k (Nest k1 q) = nilAboveNest g (k + k1) q
-
 nilAboveNest g k q           | not g && k > 0      -- No newline if no overlap
                              = textBeside_ (Str (indent k)) k q
                              | otherwise           -- Put them really above
@@ -562,9 +554,8 @@ beside_ p _ Empty = p
 beside_ Empty _ q = q
 beside_ p g q     = Beside p g q
 
-beside :: Doc -> Bool -> RDoc a -> RDoc a
 -- Specification: beside g p q = p <g> q
-
+beside :: Doc -> Bool -> RDoc a -> RDoc a
 beside NoDoc               _ _   = NoDoc
 beside (p1 `Union` p2)     g q   = beside p1 g q `union_` beside p2 g q
 beside Empty               _ q   = q
@@ -580,10 +571,9 @@ beside (TextBeside s sl p) g q   = textBeside_ s sl $! rest
                                            Empty -> nilBeside g q
                                            _     -> beside p g q
 
-nilBeside :: Bool -> RDoc a -> RDoc a
 -- Specification: text "" <> nilBeside g p
 --              = text "" <g> p
-
+nilBeside :: Bool -> RDoc a -> RDoc a
 nilBeside _ Empty         = Empty -- Hence the text "" in the spec
 nilBeside g (Nest _ p)    = nilBeside g p
 nilBeside g p | g         = textBeside_ space_text 1 p
@@ -613,7 +603,6 @@ sepX x (p:ps) = sep1 x (reduceDoc p) 0 ps
 -- Specification: sep1 g k ys = sep (x : map (nest k) ys)
 --                            = oneLiner (x <g> nest k (hsep ys))
 --                              `union` x $$ nest k (vcat ys)
-
 sep1 :: Bool -> RDoc a -> Int -> [Doc] -> RDoc a
 sep1 _ _                   k _  | k `seq` False = undefined
 sep1 _ NoDoc               _ _  = NoDoc
@@ -629,16 +618,15 @@ sep1 g (TextBeside s sl p) k ys = textBeside_ s sl (sepNB g p (k - sl) ys)
 sep1 _ (Above {})          _ _  = error "sep1 Above"
 sep1 _ (Beside {})         _ _  = error "sep1 Beside"
 
-sepNB :: Bool -> Doc -> Int -> [Doc] -> Doc
 -- Specification: sepNB p k ys = sep1 (text "" <> p) k ys
 -- Called when we have already found some text in the first item
 -- We have to eat up nests
-
+sepNB :: Bool -> Doc -> Int -> [Doc] -> Doc
 sepNB g (Nest _ p) k ys
   = sepNB g p k ys -- Never triggered, because of invariant (2)
 sepNB g Empty k ys
   = oneLiner (nilBeside g (reduceDoc rest)) `mkUnion`
--- XXX: PRETTY: Used True here
+    -- XXX: TODO: PRETTY: Used True here
     nilAboveNest False k (reduceDoc (vcat ys))
   where
     rest | g         = hsep ys
@@ -703,7 +691,7 @@ fillNB g p k ys             = fill1 g p k ys
 fillNBE :: Bool -> Int -> Doc -> [Doc] -> Doc
 fillNBE g k y ys
   = nilBeside g (fill1 g ((elideNest . oneLiner . reduceDoc) y) k' ys)
--- XXX: PRETTY: Used True here
+    -- XXX: TODO: PRETTY: Used True here
     `mkUnion` nilAboveNest False k (fill g (y:ys))
   where k' = if g then k - 1 else k
 

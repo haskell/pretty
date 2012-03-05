@@ -18,14 +18,35 @@ homepage:      http://github.com/haskell/pretty
 bug-reports:   http://hackage.haskell.org/trac/ghc/newticket?component=libraries/pretty
 stability:     Stable
 build-type:    Simple
+Extra-Source-Files: README CHANGELOG
 Cabal-Version: >= 1.6
 
 Library
+    hs-source-dirs: src
     exposed-modules:
         Text.PrettyPrint
         Text.PrettyPrint.HughesPJ
     build-depends: base >= 3 && < 5
     extensions: CPP
+    ghc-options: -Wall -Werror -O -fwarn-tabs
+
+Test-Suite test-pretty
+    type: exitcode-stdio-1.0
+    hs-source-dirs: test
+                    src
+    build-depends: base >= 3 && < 5,
+                   QuickCheck == 1.*
+    main-is: Test.hs
+    extensions: CPP
+    include-dirs: src/Text/PrettyPrint
+
+-- Executable Bench1
+--     Main-Is: Bench1.hs
+--     Other-Modules:
+--         Text.PrettyPrint
+--         Text.PrettyPrint.HughesPJ
+--         Text.PrettyPrint.Core
+--     ghc-options: -Wall -Werror -O -fwarn-tabs
 
 source-repository head
     type:     git
