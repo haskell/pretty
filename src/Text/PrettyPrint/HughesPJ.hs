@@ -279,10 +279,11 @@ isEmpty :: Doc -> Bool
 isEmpty Empty = True
 isEmpty _     = False
 
+-- | Produce spacing for indenting the amount specified.
+--
 -- an old version inserted tabs being 8 columns apart in the output.
-indent :: Int -> TextDetails
-indent n | n >= 8    = Str "        " `txt` indent (n - 8)
-         | otherwise = Str $ replicate n ' '
+indent :: Int -> String
+indent !n = replicate n ' '
 
 {-
 Q: What is the reason for negative indentation (i.e. argument to indent
@@ -527,7 +528,7 @@ nilAboveNest _ _ Empty       = Empty
                                -- Here's why the "text s <>" is in the spec!
 nilAboveNest g k (Nest k1 q) = nilAboveNest g (k + k1) q
 nilAboveNest g k q           | not g && k > 0      -- No newline if no overlap
-                             = textBeside_ (indent k) k q
+                             = textBeside_ (Str (indent k)) k q
                              | otherwise           -- Put them really above
                              = nilAbove_ (mkNest k q)
 
@@ -886,7 +887,7 @@ display m !page_width !ribbon_width txt end doc
         lay _ (Union {})   = error "display lay Union"
 
         lay1 !k s !sl p    = let !r = k + sl
-                             in indent k `txt` (s `txt` lay2 r p)
+                             in Str (indent k) `txt` (s `txt` lay2 r p)
 
         lay2 k _ | k `seq` False   = undefined
         lay2 k (NilAbove p)        = nl_text `txt` lay k p
