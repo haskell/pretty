@@ -22,6 +22,8 @@
 -- <http://www.cs.chalmers.se/~rjmh/Papers/pretty.ps>
 --
 -----------------------------------------------------------------------------
+
+#ifndef TESTING
 module Text.PrettyPrint.HughesPJ (
 
         -- * The document type
@@ -70,6 +72,7 @@ module Text.PrettyPrint.HughesPJ (
         fullRender
 
     ) where
+#endif
 
 import Data.Monoid ( Monoid(mempty, mappend) )
 import Data.String ( IsString(fromString) )
@@ -327,6 +330,7 @@ lbrack :: Doc -- ^ A '[' character
 rbrack :: Doc -- ^ A ']' character
 lbrace :: Doc -- ^ A '{' character
 rbrace :: Doc -- ^ A '}' character
+semi   = char ';'
 comma  = char ','
 colon  = char ':'
 space  = char ' '

@@ -1,5 +1,7 @@
---
+module Main (main) where
+
 import Text.PrettyPrint.HughesPJ
+
 main :: IO ()
 main = do
     putStrLn ""
@@ -28,3 +30,4 @@ main = do
     print $ renderStyle style{lineLength=1} $ foldr ($+$) empty test2
     putStrLn "------------------------------$$----------------------------"
     print $ renderStyle style{lineLength=1} $ foldr ($$)  empty test2
+

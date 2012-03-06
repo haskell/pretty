@@ -14,24 +14,12 @@
 -----------------------------------------------------------------------------
 import {- whitebox -} PrettyTestVersion
 
-import Test.QuickCheck
 import Control.Monad
-import Debug.Trace
 import Data.Char (isSpace)
 import Data.List (intersperse)
+import Debug.Trace
 
--- tweaked to perform many small tests
-myConfig :: Int -> Int -> Config
-myConfig d n = defaultConfig { configMaxTest = n, configMaxFail = n*5, configSize =  (+2) . (`div` n) . (*d)  }
-
-myTest :: (Testable a) => String -> a -> IO ()
-myTest = myTest' 15 maxTests
-maxTests = 1000
-myTest' :: (Testable a) => Int -> Int -> String -> a -> IO ()
-myTest' d k msg t = putStrLn (" * "++msg) >> check (myConfig d k) t
-
-myAssert :: String -> Bool -> IO ()
-myAssert msg b = putStrLn $ (if b then "Ok, passed " else "Failed test:\n  ")++msg
+import Test.QuickCheck
 
 main :: IO ()
 main = do
@@ -42,12 +30,27 @@ main = do
     check_rendering
     check_list_def
 
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- Utility functions
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--- Additional HPC misses:
--- mkNest _       NoDoc       = NoDoc
+-- tweaked to perform many small tests
+myConfig :: Int -> Int -> Config
+myConfig d n = defaultConfig { configMaxTest = n, configMaxFail = n*5, configSize =  (+2) . (`div` n) . (*d)  }
 
+myTest :: (Testable a) => String -> a -> IO ()
+myTest = myTest' 15 maxTests
+maxTests = 1000
 
+myTest' :: (Testable a) => Int -> Int -> String -> a -> IO ()
+myTest' d k msg t = putStrLn (" * "++msg) >> check (myConfig d k) t
+
+myAssert :: String -> Bool -> IO ()
+myAssert msg b = putStrLn $ (if b then "Ok, passed " else "Failed test:\n  ")++msg
+
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 -- Quickcheck tests
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -- Equalities on Documents
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,8 +83,9 @@ deqs ds1 ds2 =
         
 zipLayouts :: Doc -> Doc -> Maybe [(Doc,Doc)]
 zipLayouts d1 d2 = zipE (reducedDocs d1) (reducedDocs d2)
-    where        
-    reducedDocs = map mergeTexts . flattenDoc
+    where reducedDocs = map mergeTexts . flattenDoc
+
+zipE :: [Doc] -> [Doc] -> Maybe [(Doc, Doc)]
 zipE l1 l2 | length l1 == length l2 = Just $ zip l1 l2
            | otherwise              = Nothing
 
@@ -92,18 +96,19 @@ lseq d1 d2 = maybe False id . fmap (all (uncurry docEq)) $ zipLayouts d1 d2
 -- abstract render equality for layouts
 -- should only be performed if the number of layouts is reasonably small
 rdeq :: Doc -> Doc -> Bool
-rdeq d1 d2 = 
-    maybe False id . fmap (all (uncurry layoutEq)) $ zipLayouts d1 d2
-    where
-        layoutEq d1 d2 = (abstractLayout d1) == (abstractLayout d2)
+rdeq d1 d2 = maybe False id . fmap (all (uncurry layoutEq)) $ zipLayouts d1 d2
+    where layoutEq d1 d2 = (abstractLayout d1) == (abstractLayout d2)
 
 layoutsCountBounded :: Int -> [Doc] -> Bool
-layoutsCountBounded k docs = isBoundedBy k (concatMap flattenDoc docs) where
+layoutsCountBounded k docs = isBoundedBy k (concatMap flattenDoc docs)
+  where
     isBoundedBy k [] = True
     isBoundedBy 0 (x:xs) = False
     isBoundedBy k (x:xs) = isBoundedBy (k-1) xs
+
 layoutCountBounded :: Int -> Doc -> Bool
 layoutCountBounded k doc = layoutsCountBounded k [doc]
+
 maxLayouts :: Int
 maxLayouts = 64
 
@@ -127,7 +132,7 @@ rds = (map mergeTexts.flattenDoc)
 
 
 -- (1) QuickCheck Properties: Laws
--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 {-
 Monoid laws for <>,<+>,$$,$+$
@@ -266,8 +271,10 @@ Definitions of list versions
 -}
 prop_hcat :: [Doc] -> Bool
 prop_hcat ds = hcat ds `deq` (foldr (<>) empty) ds
+
 prop_hsep :: [Doc] -> Bool
 prop_hsep ds = hsep ds `deq` (foldr (<+>) empty) ds
+
 prop_vcat :: [Doc] -> Bool
 prop_vcat ds = vcat ds `deq` (foldr ($$) empty) ds
 
@@ -278,6 +285,7 @@ Update (pretty-1.1.0):
 -}
 prop_sep :: [Doc] -> Bool
 prop_sep ds = sep ds `rdeq` (sepDef ds)
+
 sepDef :: [Doc] -> Doc
 sepDef docs = let ds = filter (not . isEmpty) docs in
               case ds of
@@ -292,6 +300,7 @@ check_list_def = do
     myTest "hsep def" (prop_hsep . buildDocList) 
     myTest "vcat def" (prop_vcat . buildDocList) 
     myTest "sep def" (prop_sep . buildDocList)
+
 {-
 Definition of fill (fcat/fsep)
 -- Specification: 
@@ -340,19 +349,25 @@ Definition of fill (fcat/fsep)
 -}
 prop_fcat_vcat :: [Doc] -> Bool
 prop_fcat_vcat ds = last (flattenDoc $ fcat ds) `deq` last (flattenDoc $ vcat ds)
+
 prop_fcat :: [Doc] -> Bool
 prop_fcat ds = fcat ds `rdeq` fillDef False (filter (not . isEmpty) ds)
+
 prop_fsep :: [Doc] -> Bool
 prop_fsep ds = fsep ds `rdeq` fillDef True (filter (not . isEmpty) ds)
+
 prop_fcat_old :: [Doc] -> Bool
 prop_fcat_old ds = fillOld2 False ds `rdeq` fillDef False (filter (not . isEmpty) ds)
+
 prop_fcat_old_old :: [Doc] -> Bool
 prop_fcat_old_old ds = fillOld2 False ds `rdeq` fillDefOld False (filter (not . isEmpty) ds)
 
 prop_restrict_sz :: (Testable a) => Int -> ([Doc] -> a) -> ([Doc] -> Property) 
 prop_restrict_sz k p ds = layoutCountBounded k (fsep ds) ==> p ds
+
 prop_restrict_ol :: (Testable a) => ([Doc] -> a) -> ([Doc] -> Property)
 prop_restrict_ol p ds = (all isOneLiner . map normalize $ ds) ==> p ds
+
 prop_restrict_no_nest_start :: (Testable a) => ([Doc] -> a) -> ([Doc] -> Property)
 prop_restrict_no_nest_start p ds = (all (not .isNest) ds) ==> p ds
 
@@ -435,6 +450,7 @@ check_laws = do
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 stop :: a -> (a, Bool)
 stop a = (a,False)
+
 recurse :: a -> (a, Bool)
 recurse a = (a,True)
 -- strategy: generic synthesize with stop condition 
@@ -688,6 +704,7 @@ check_rendering = do
         
 extractText :: String -> String
 extractText = filter (not . isSpace)
+
 extractTextZZ :: String -> String
 extractTextZZ = filter (\c -> not (isSpace c) && c /= '/' && c /= '\\')
 
@@ -834,6 +851,7 @@ normalize d = norm d where
     normUnion (Nest _ _) d2 = error$ "normUnion Nest "++topLevelCTor d2
     normUnion d1 (Nest _ _) = error$ "normUnion Nset "++topLevelCTor d1
     normUnion p1 p2  = Union p1 p2
+
 topLevelCTor :: Doc -> String
 topLevelCTor d = tlc d where
     tlc NoDoc = "NoDoc"
@@ -863,6 +881,7 @@ isOneLiner = genericProp (&&) iol where
     iol (Union _ _)  = stop False
     iol  NoDoc = stop False
     iol _ = recurse True
+
 hasOneLiner :: RDoc -> Bool
 hasOneLiner = genericProp (&&) iol where
     iol (NilAbove _) = stop False
@@ -920,6 +939,7 @@ abstractLayout d = cal 0 Nothing (reduceDoc d) where
     addTextEOL k str Nothing = (k,tdToStr str)
     addTextEOL _ str (Just (k,pre)) = (k,pre++ tdToStr str)
     addText k str = Just . addTextEOL k str
+
 docifyLayout :: [(Int,String)] -> Doc
 docifyLayout = vcat . map (\(k,t) -> nest k (text t))
     
@@ -933,6 +953,7 @@ firstLineIsLeftMost :: Doc -> Bool
 firstLineIsLeftMost = all (firstIsLeftMost . abstractLayout) . flattenDoc where
     firstIsLeftMost ((k,_):xs@(_:_)) = all ( (>= k) . fst) xs
     firstIsLeftMost _ = True
+
 noNegativeIndent :: Doc -> Bool
 noNegativeIndent = all (noNegIndent . abstractLayout) . flattenDoc where
     noNegIndent = all ( (>= 0) . fst)
@@ -954,10 +975,12 @@ data CDoc = CEmpty           -- empty
             deriving (Eq,Ord)
 
 data CList = CCat | CSep | CFCat | CFSep deriving (Eq,Ord)
-listComb :: CList -> ([Doc] -> Doc)
-listComb cs = case cs of CCat -> cat ;  CSep -> sep ; CFCat -> fcat  ; CFSep -> fsep
+
 instance Show CList where 
     show cs = case cs of CCat -> "cat" ;  CSep -> "sep" ; CFCat -> "fcat"  ; CFSep -> "fsep" 
+
+listComb :: CList -> ([Doc] -> Doc)
+listComb cs = case cs of CCat -> cat ;  CSep -> sep ; CFCat -> fcat  ; CFSep -> fsep
 
 buildDoc :: CDoc -> Doc
 buildDoc CEmpty = empty
@@ -1015,6 +1038,7 @@ instance Arbitrary CList where
     coarbitrary cl = variant (case cl of CCat -> 0; CSep -> 1; CFCat -> 2; CFSep -> 3)
 
 newtype CDocList = CDocList { unDocList :: [CDoc] } 
+
 instance Show CDocList where show = show . unDocList
 
 -- we assume that the list itself has no size, so that 
@@ -1040,6 +1064,7 @@ instance Arbitrary Text where
 
 text' :: Text -> Doc
 text' (Text str) = text str
+
 -- convert text details to string
 tdToStr :: TextDetails -> String
 tdToStr (Chr c) = [c]

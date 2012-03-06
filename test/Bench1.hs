@@ -1,7 +1,6 @@
-module Main where
+module Main (main) where
 
 import Text.PrettyPrint.HughesPJ
--- import Pretty
 
 stuff :: String -> String -> Double -> Rational -> Int -> Int -> Int -> Doc
 stuff s1 s2 d1 r1 i1 i2 i3 =
