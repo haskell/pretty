@@ -280,14 +280,9 @@ isEmpty Empty = True
 isEmpty _     = False
 
 -- an old version inserted tabs being 8 columns apart in the output.
-indent :: Int -> String
-indent !n = replicate n ' '
-{- TODO: GHC Optimised version
--- optimise long indentations using LitString chunks of 8 spaces
-indent n r | n >=# _ILIT(8) = LStr (sLit "        ") (_ILIT(8)) `txt`
-                              indent (n -# _ILIT(8)) r
-           | otherwise      = Str (spaces n) `txt` r
--}
+indent :: Int -> TextDetails
+indent n | n >= 8    = Str "        " `txt` indent (n - 8)
+         | otherwise = Str $ replicate n ' '
 
 {-
 Q: What is the reason for negative indentation (i.e. argument to indent
@@ -532,7 +527,7 @@ nilAboveNest _ _ Empty       = Empty
                                -- Here's why the "text s <>" is in the spec!
 nilAboveNest g k (Nest k1 q) = nilAboveNest g (k + k1) q
 nilAboveNest g k q           | not g && k > 0      -- No newline if no overlap
-                             = textBeside_ (Str (indent k)) k q
+                             = textBeside_ (indent k) k q
                              | otherwise           -- Put them really above
                              = nilAbove_ (mkNest k q)
 
@@ -631,7 +626,7 @@ sepNB g (Nest _ p) k ys
   = sepNB g p k ys -- Never triggered, because of invariant (2)
 sepNB g Empty k ys
   = oneLiner (nilBeside g (reduceDoc rest)) `mkUnion`
-    -- XXX: TODO: PRETTY: Used True here
+    -- XXX: TODO: PRETTY: Used to use True here (but GHC used False...)
     nilAboveNest False k (reduceDoc (vcat ys))
   where
     rest | g         = hsep ys
@@ -696,7 +691,7 @@ fillNB g p k ys             = fill1 g p k ys
 fillNBE :: Bool -> Int -> Doc -> [Doc] -> Doc
 fillNBE g k y ys
   = nilBeside g (fill1 g ((elideNest . oneLiner . reduceDoc) y) k' ys)
-    -- XXX: TODO: PRETTY: Used True here
+    -- XXX: TODO: PRETTY: Used to use True here (but GHC used False...)
     `mkUnion` nilAboveNest False k (fill g (y:ys))
   where k' = if g then k - 1 else k
 
@@ -891,7 +886,7 @@ display m !page_width !ribbon_width txt end doc
         lay _ (Union {})   = error "display lay Union"
 
         lay1 !k s !sl p    = let !r = k + sl
-                             in Str (indent k) `txt` (s `txt` lay2 r p)
+                             in indent k `txt` (s `txt` lay2 r p)
 
         lay2 k _ | k `seq` False   = undefined
         lay2 k (NilAbove p)        = nl_text `txt` lay k p
