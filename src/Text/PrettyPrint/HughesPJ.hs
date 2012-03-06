@@ -56,6 +56,7 @@ module Text.PrettyPrint.HughesPJ (
 
         -- * Utility functions for documents
         first, reduceDoc,
+        -- TODO: Should these be exported? Previously they weren't
 
         -- * Rendering documents
 
@@ -210,7 +211,7 @@ Notice the difference between
 
 
 -- | RDoc is a "reduced GDoc", guaranteed not to have a top-level Above or Beside.
-type RDoc a = Doc
+type RDoc = Doc
 
 -- | The TextDetails data type
 --
@@ -373,7 +374,7 @@ braces p       = char '{' <> p <> char '}'
 -- Structural operations on GDocs
 
 -- | Perform some simplification of a built up @GDoc@.
-reduceDoc :: Doc -> RDoc a
+reduceDoc :: Doc -> RDoc
 reduceDoc (Beside p g q) = beside p g (reduceDoc q)
 reduceDoc (Above  p g q) = above  p g (reduceDoc q)
 reduceDoc p              = p
@@ -448,17 +449,17 @@ reduceAB (Above  Empty _ q) = q
 reduceAB (Beside Empty _ q) = q
 reduceAB doc                = doc
 
-nilAbove_ :: RDoc a -> RDoc a
+nilAbove_ :: RDoc -> RDoc
 nilAbove_ p = NilAbove p
 
 -- Arg of a TextBeside is always an RDoc
-textBeside_ :: TextDetails -> Int -> RDoc a -> RDoc a
+textBeside_ :: TextDetails -> Int -> RDoc -> RDoc
 textBeside_ s sl p = TextBeside s sl p
 
-nest_ :: Int -> RDoc a -> RDoc a
+nest_ :: Int -> RDoc -> RDoc
 nest_ k p = Nest k p
 
-union_ :: RDoc a -> RDoc a -> RDoc a
+union_ :: RDoc -> RDoc -> RDoc
 union_ p q = Union p q
 
 
@@ -497,13 +498,13 @@ above_ p _ Empty = p
 above_ Empty _ q = q
 above_ p g q     = Above p g q
 
-above :: Doc -> Bool -> RDoc a -> RDoc a
+above :: Doc -> Bool -> RDoc -> RDoc
 above (Above p g1 q1)  g2 q2 = above p g1 (above q1 g2 q2)
 above p@(Beside _ _ _) g  q  = aboveNest (reduceDoc p) g 0 (reduceDoc q)
 above p g q                  = aboveNest p             g 0 (reduceDoc q)
 
 -- Specfication: aboveNest p g k q = p $g$ (nest k q)
-aboveNest :: RDoc a -> Bool -> Int -> RDoc a -> RDoc a
+aboveNest :: RDoc -> Bool -> Int -> RDoc -> RDoc
 aboveNest _                   _ k _ | k `seq` False = undefined
 aboveNest NoDoc               _ _ _ = NoDoc
 aboveNest (p1 `Union` p2)     g k q = aboveNest p1 g k q `union_`
@@ -525,7 +526,7 @@ aboveNest (Beside {})         _ _ _ = error "aboveNest Beside"
 
 -- Specification: text s <> nilaboveNest g k q
 --              = text s <> (text "" $g$ nest k q)
-nilAboveNest :: Bool -> Int -> RDoc a -> RDoc a
+nilAboveNest :: Bool -> Int -> RDoc -> RDoc
 nilAboveNest _ k _           | k `seq` False = undefined
 nilAboveNest _ _ Empty       = Empty
                                -- Here's why the "text s <>" is in the spec!
@@ -559,7 +560,7 @@ beside_ Empty _ q = q
 beside_ p g q     = Beside p g q
 
 -- Specification: beside g p q = p <g> q
-beside :: Doc -> Bool -> RDoc a -> RDoc a
+beside :: Doc -> Bool -> RDoc -> RDoc
 beside NoDoc               _ _   = NoDoc
 beside (p1 `Union` p2)     g q   = beside p1 g q `union_` beside p2 g q
 beside Empty               _ q   = q
@@ -577,7 +578,7 @@ beside (TextBeside s sl p) g q   = textBeside_ s sl $! rest
 
 -- Specification: text "" <> nilBeside g p
 --              = text "" <g> p
-nilBeside :: Bool -> RDoc a -> RDoc a
+nilBeside :: Bool -> RDoc -> RDoc
 nilBeside _ Empty         = Empty -- Hence the text "" in the spec
 nilBeside g (Nest _ p)    = nilBeside g p
 nilBeside g p | g         = textBeside_ space_text 1 p
@@ -607,7 +608,7 @@ sepX x (p:ps) = sep1 x (reduceDoc p) 0 ps
 -- Specification: sep1 g k ys = sep (x : map (nest k) ys)
 --                            = oneLiner (x <g> nest k (hsep ys))
 --                              `union` x $$ nest k (vcat ys)
-sep1 :: Bool -> RDoc a -> Int -> [Doc] -> RDoc a
+sep1 :: Bool -> RDoc -> Int -> [Doc] -> RDoc
 sep1 _ _                   k _  | k `seq` False = undefined
 sep1 _ NoDoc               _ _  = NoDoc
 sep1 g (p `Union` q)       k ys = sep1 g p k ys `union_`
@@ -666,11 +667,11 @@ fsep = fill True
 -- layout1 $*$ layout2 | hasMoreThanOneLine layout1 = layout1 $$ layout2
 --                     | otherwise                  = layout1 $+$ layout2
 
-fill :: Bool -> [Doc] -> RDoc a
+fill :: Bool -> [Doc] -> RDoc
 fill _ []     = empty
 fill g (p:ps) = fill1 g (reduceDoc p) 0 ps
 
-fill1 :: Bool -> RDoc a -> Int -> [Doc] -> Doc
+fill1 :: Bool -> RDoc -> Int -> [Doc] -> Doc
 fill1 _ _                   k _  | k `seq` False = undefined
 fill1 _ NoDoc               _ _  = NoDoc
 fill1 g (p `Union` q)       k ys = fill1 g p k ys `union_`
@@ -707,10 +708,10 @@ elideNest d          = d
 -- ---------------------------------------------------------------------------
 -- Selecting the best layout
 
-best :: Int     -- Line length
-     -> Int     -- Ribbon length
-     -> RDoc a
-     -> RDoc a  -- No unions in here!
+best :: Int   -- Line length
+     -> Int   -- Ribbon length
+     -> RDoc
+     -> RDoc  -- No unions in here!
 best w0 r p0
   = get w0 p0
   where
