@@ -12,7 +12,9 @@
 -- 3) Testing bug fixes (whitebox)
 --
 -----------------------------------------------------------------------------
-import {- whitebox -} PrettyTestVersion
+import PrettyTestVersion
+import TestGenerators
+import TestStructures
 
 import Control.Monad
 import Data.Char (isSpace)
@@ -35,18 +37,25 @@ main = do
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -- tweaked to perform many small tests
-myConfig :: Int -> Int -> Config
-myConfig d n = defaultConfig { configMaxTest = n, configMaxFail = n*5, configSize =  (+2) . (`div` n) . (*d)  }
+myConfig :: Int -> Int -> Args
+myConfig d n = stdArgs { maxSize = d, maxDiscard = n*5 }
+
+maxTests :: Int
+maxTests = 1000
 
 myTest :: (Testable a) => String -> a -> IO ()
 myTest = myTest' 15 maxTests
-maxTests = 1000
 
 myTest' :: (Testable a) => Int -> Int -> String -> a -> IO ()
-myTest' d k msg t = putStrLn (" * "++msg) >> check (myConfig d k) t
+myTest' d n msg t = do
+    putStrLn (" * " ++ msg)
+    r <- quickCheckWithResult (myConfig d n) t
+    case r of
+        (Failure {}) -> error "Failed testing!"
+        _            -> return ()
 
 myAssert :: String -> Bool -> IO ()
-myAssert msg b = putStrLn $ (if b then "Ok, passed " else "Failed test:\n  ")++msg
+myAssert msg b = putStrLn $ (if b then "Ok, passed " else "Failed test:\n  ") ++ msg
 
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 -- Quickcheck tests
@@ -402,13 +411,18 @@ fillDefOld g = normalize . fill' . filter (not.isEmpty) . map normalize where
     append = if g then (<+>) else (<>)
     union = Union
 
+check_fill_prop :: Testable a => String -> ([Doc] -> a) -> IO ()
 check_fill_prop msg p = myTest msg (prop_restrict_sz maxLayouts p . buildDocList)
+
+check_fill_def_fail :: IO ()
 check_fill_def_fail = do 
     check_fill_prop "fcat defOld vs fcatOld (ol)" (prop_restrict_ol prop_fcat_old_old)
     check_fill_prop "fcat defOld vs fcatOld" prop_fcat_old_old
 
     check_fill_prop "fcat def (ol) vs fcatOld" (prop_restrict_ol prop_fcat_old)
     check_fill_prop "fcat def vs fcatOld" prop_fcat_old 
+
+check_fill_def_ok :: IO ()
 check_fill_def_ok = do
     check_fill_prop "fcat def (not nest start) vs fcatOld" (prop_restrict_no_nest_start prop_fcat_old)
 
@@ -416,8 +430,13 @@ check_fill_def_ok = do
     check_fill_prop "fcat def (ol) vs fcat" (prop_restrict_ol prop_fcat)
     check_fill_prop "fcat def vs fcat" prop_fcat 
     check_fill_prop "fsep def vs fsep" prop_fsep 
+
+
+check_fill_def_laws :: IO ()
 check_fill_def_laws = do
     check_fill_prop "lastLayout (fcat ps) == vcat ps" prop_fcat_vcat
+
+check_fill_def :: IO ()
 check_fill_def = check_fill_def_fail >> check_fill_def_ok
 {-
 text "ac"; nilabove; nest -1; text "a"; empty
@@ -433,6 +452,7 @@ Here it would be convenient to generate functions (or replace empty / text bz z-
 {- 
 All laws: monoid, text, nest, misc, list versions, oneLiner, list def
 -}
+check_laws :: IO ()
 check_laws = do
     check_fill_def_ok
     check_monoid
@@ -542,10 +562,12 @@ isEmptyDoc d = case emptyReduction d of Empty -> True; _ -> False
   * Consistency
   If all arguments of one of the list versions are empty documents, the list is an empty document
 -}
-prop_inv6a :: ([Doc] -> Doc) -> [Doc] -> Property
-prop_inv6a sep ds = all isEmptyDoc ds ==> isEmptyRepr (sep ds) where
-    isEmptyRepr Empty = True
-    isEmptyRepr _ = False
+prop_inv6a :: ([Doc] -> Doc) -> Property
+prop_inv6a sep = forAll emptyDocListGen $
+    \ds -> isEmptyRepr (sep $ buildDocList ds)
+  where
+      isEmptyRepr Empty = True
+      isEmptyRepr _     = False
 
 {-
   * The first line of every layout in the left argument of @Union@ is
@@ -589,7 +611,7 @@ check_invariants = do
     myTest "Invariant 4" (prop_inv4 . buildDoc)
     myTest "Invariant 5+" (prop_inv5 . buildDoc)
     myTest "Invariant 6" (prop_inv6 . buildDoc)
-    mapM_ (\sp -> myTest "Invariant 6a" (prop_inv6a sp . buildDocList)) [ cat, sep, fcat, fsep, vcat, hcat, hsep ]
+    mapM_ (\sp -> myTest "Invariant 6a" $ prop_inv6a sp) [ cat, sep, fcat, fsep, vcat, hcat, hsep ]
     myTest "Invariant 7 (fails in HughesPJ:20080621)" (prop_inv7 . buildDoc)
 
 -- `negative indent' 
@@ -715,7 +737,7 @@ punctuateDef p ps =
     map (\d -> d <> p) dsInit ++ [dLast]
        
 -- (4) QuickChecking improvments and bug fixes
--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 {-
 putStrLn $ render' $ fill True [ text "c", text "c",empty, text "c", text "b"]
@@ -958,134 +980,3 @@ noNegativeIndent :: Doc -> Bool
 noNegativeIndent = all (noNegIndent . abstractLayout) . flattenDoc where
     noNegIndent = all ( (>= 0) . fst)
     
--- (6) Datatypes for law QuickChecks
--- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
--- User visible combinators
--- The tests are performed on pretty printing terms which are constructable using the public combinators.
--- We need to have a datatype for those combinators, otherwise it becomes almost impossible to reconstruct failing tests.
-
-data CDoc = CEmpty           -- empty
-          | CText String     -- text s
-          | CList CList [CDoc] -- cat,sep,fcat,fsep ds
-          | CBeside Bool CDoc CDoc -- a <> b and a <+> b
-          | CAbove Bool CDoc CDoc  -- a $$ b and a $+$ b
-          | CNest Int CDoc   -- nest k d
---          | ZText String     -- zeroWidthText s
-            deriving (Eq,Ord)
-
-data CList = CCat | CSep | CFCat | CFSep deriving (Eq,Ord)
-
-instance Show CList where 
-    show cs = case cs of CCat -> "cat" ;  CSep -> "sep" ; CFCat -> "fcat"  ; CFSep -> "fsep" 
-
-listComb :: CList -> ([Doc] -> Doc)
-listComb cs = case cs of CCat -> cat ;  CSep -> sep ; CFCat -> fcat  ; CFSep -> fsep
-
-buildDoc :: CDoc -> Doc
-buildDoc CEmpty = empty
-buildDoc (CText s) = text s
---buildDoc (ZText s) = zeroWidthText s
-buildDoc (CList sp ds) = (listComb sp) $ map buildDoc ds
-buildDoc (CBeside sep d1 d2) = (if sep then (<+>) else (<>)) (buildDoc d1) (buildDoc d2) 
-buildDoc (CAbove noOvlap d1 d2) = (if noOvlap then ($+$) else ($$)) (buildDoc d1) (buildDoc d2) 
-buildDoc (CNest k d) = nest k $ buildDoc d
-
-liftDoc2 :: (Doc -> Doc -> a) -> (CDoc -> CDoc -> a)
-liftDoc2 f cd1 cd2 = f (buildDoc cd1) (buildDoc cd2)
-liftDoc3 :: (Doc -> Doc -> Doc -> a) -> (CDoc -> CDoc -> CDoc -> a)
-liftDoc3 f cd1 cd2 cd3 = f (buildDoc cd1) (buildDoc cd2) (buildDoc cd3)
- 
-instance Show CDoc where
-    showsPrec k CEmpty = showString "empty"
-    showsPrec k (CText s) = showParen (k >= 10) (showString " text " . shows s)
---    showsPrec k (ZText s) = showParen (k >= 10) (showString " zeroWidthText " . shows s)
-    showsPrec k (CList sp ds) = showParen (k >= 10) $ (shows sp . showList ds)
-    showsPrec k (CBeside sep d1 d2) = showParen (k >= 6) $ 
-        (showsPrec 6 d1) . showString (if sep then " <+> " else " <> ") . (showsPrec 6 d2) 
-    showsPrec k (CAbove noOvlap d1 d2) = showParen (k >= 5) $ 
-        (showsPrec 5 d1) . showString (if noOvlap then " $+$ " else " $$ ") . (showsPrec 5 d2) 
-    showsPrec k (CNest n d) = showParen (k >= 10) $ showString " nest " . showsPrec 10 n . showString " ". showsPrec 10 d
-
-instance Arbitrary CDoc where
-   arbitrary = sized arbDoc
-    where
-      -- TODO: finetune frequencies
-      arbDoc k | k <= 1 = frequency [
-               (1,return CEmpty)
-             , (2,return (CText . unText) `ap` arbitrary)
---             , (1,return (ZText "&"))
-             ]
-      arbDoc n = frequency [
-             (1, return CList `ap` arbitrary `ap`  (liftM unDocList $ resize (pred n) arbitrary))
-            ,(1, binaryComb n CBeside)
-            ,(1, binaryComb n CAbove)
-            ,(1, choose (0,10) >>= \k -> return (CNest k) `ap` (resize (pred n) arbitrary)) 
-            ]
-      binaryComb n f = 
-        split2 (n-1) >>= \(n1,n2) ->
-        return f `ap` arbitrary `ap` (resize n1 arbitrary) `ap` (resize n2 arbitrary)
-      split2 n = flip liftM ( choose (0,n) ) $ \sz -> (sz, n - sz)
-   coarbitrary CEmpty = variant 0
-   coarbitrary (CText t) = variant 1 . coarbitrary (length t)
-   coarbitrary (CList f list) = variant 2 . coarbitrary f . coarbitrary list
-   coarbitrary (CBeside b d1 d2) = variant 3 . coarbitrary b . coarbitrary d1 . coarbitrary d2
-   coarbitrary (CAbove b d1 d2) = variant 4 . coarbitrary b . coarbitrary d1 . coarbitrary d2
-   coarbitrary (CNest k d) = variant 5 . coarbitrary k . coarbitrary d
-   
-instance Arbitrary CList where
-    arbitrary = oneof $ map return [ CCat, CSep, CFCat, CFSep ]
-    coarbitrary cl = variant (case cl of CCat -> 0; CSep -> 1; CFCat -> 2; CFSep -> 3)
-
-newtype CDocList = CDocList { unDocList :: [CDoc] } 
-
-instance Show CDocList where show = show . unDocList
-
--- we assume that the list itself has no size, so that 
--- sizeof (a $$ b) = sizeof (sep [a,b]) = sizeof(a)+sizeof(b)+1
-instance Arbitrary CDocList where
-    arbitrary = liftM CDocList $ sized $ \n -> arbDocList n where
-        arbDocList 0 = return []
-        arbDocList n = do
-          listSz <- choose (1,n)
-          let elems = take listSz $ repeat (n `div` listSz) -- approximative
-          mapM (\sz -> resize sz arbitrary) elems
-    coarbitrary (CDocList ds) = coarbitrary ds
-    
-buildDocList :: CDocList -> [Doc]
-buildDocList = map buildDoc . unDocList
-
--- wrapper for String argument of `text'
-newtype Text = Text { unText :: String } deriving (Eq,Ord,Show)
-instance Arbitrary Text where
-    arbitrary = liftM Text $ sized $ \n -> mapM (const arbChar) [1..n]
-        where arbChar = oneof (map return ['a'..'c'])
-    coarbitrary (Text str) = coarbitrary (length str)
-
-text' :: Text -> Doc
-text' (Text str) = text str
-
--- convert text details to string
-tdToStr :: TextDetails -> String
-tdToStr (Chr c) = [c]
-tdToStr (Str s) = s
-tdToStr (PStr s) = s
-
--- synthesize with stop for cdoc
--- constructor order
-genericCProp :: (a -> a -> a) -> (CDoc -> (a, Bool)) -> CDoc -> a
-genericCProp c q cdoc = 
-    case q cdoc of
-        (v,False) -> v
-        (v,True)  -> foldl c v subs
-    where
-        rec = genericCProp c q
-        subs = case cdoc of
-            CEmpty  -> []
-            CText _ -> []
---            ZText _ -> []
-            CList _ ds -> map rec ds
-            CBeside _ d1 d2 -> [rec d1, rec d2]
-            CAbove b d1 d2 -> [rec d1, rec d2]
-            CNest k d -> [rec d]
-

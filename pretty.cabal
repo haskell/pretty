@@ -21,13 +21,17 @@ build-type:    Simple
 Extra-Source-Files: README CHANGELOG
 Cabal-Version: >= 1.6
 
+source-repository head
+    type:     git
+    location: http://github.com/haskell/pretty.git
+
 Library
     hs-source-dirs: src
     exposed-modules:
         Text.PrettyPrint
         Text.PrettyPrint.HughesPJ
     build-depends: base >= 3 && < 5
-    extensions: CPP
+    extensions: CPP, BangPatterns
     ghc-options: -Wall -Werror -O -fwarn-tabs
 
 Test-Suite test-pretty
@@ -35,20 +39,21 @@ Test-Suite test-pretty
     hs-source-dirs: test
                     src
     build-depends: base >= 3 && < 5,
-                   QuickCheck == 1.*
+                   QuickCheck == 2.*
     main-is: Test.hs
-    extensions: CPP
+    other-modules:
+        TestGenerators
+        TestStructures
+    extensions: CPP, BangPatterns
     include-dirs: src/Text/PrettyPrint
 
 -- Executable Bench1
---     Main-Is: Bench1.hs
---     Other-Modules:
+--     main-is: Bench1.hs
+--     hs-source-dirs: test
+--                     src
+--     other-modules:
 --         Text.PrettyPrint
 --         Text.PrettyPrint.HughesPJ
---         Text.PrettyPrint.Core
---     ghc-options: -Wall -Werror -O -fwarn-tabs
-
-source-repository head
-    type:     git
-    location: http://github.com/haskell/pretty.git
+--     extensions: CPP, BangPatterns
+--     ghc-options: -O -fwarn-tabs
 
