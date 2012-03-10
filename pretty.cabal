@@ -19,7 +19,7 @@ bug-reports:   http://hackage.haskell.org/trac/ghc/newticket?component=libraries
 stability:     Stable
 build-type:    Simple
 Extra-Source-Files: README CHANGELOG
-Cabal-Version: >= 1.6
+Cabal-Version: >= 1.8
 
 source-repository head
     type:     git
@@ -32,7 +32,7 @@ Library
         Text.PrettyPrint.HughesPJ
     build-depends: base >= 3 && < 5
     extensions: CPP, BangPatterns
-    ghc-options: -Wall -Werror -O -fwarn-tabs
+    ghc-options: -Wall -fwarn-tabs
 
 Test-Suite test-pretty
     type: exitcode-stdio-1.0
