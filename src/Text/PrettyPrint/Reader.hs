@@ -1,5 +1,3 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Text.PrettyPrint.Reader
