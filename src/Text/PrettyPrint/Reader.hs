@@ -8,8 +8,9 @@
 -- Stability   :  stable
 -- Portability :  portable
 --
--- Monadic reader combinators for John Hughes's and Simon Peyton
--- Jones's Pretty Printer.
+-- A wrapper around the John Hughes's and Simon Peyton Jones's Pretty
+-- Printer combinators based on the ReaderT monad transformer, allowing
+-- lookups to be performed during the pretty-printing process.
 -----------------------------------------------------------------------------
 
 module Text.PrettyPrint.Reader (
@@ -84,7 +85,7 @@ infixl 5 $$, $+$
 --------------------------------------------------------------------------------
 
 -- | PP is a ReaderT monad transformer that allows lookups to be
--- performed during the pretty printing process. For instance, suppose
+-- performed during the pretty-printing process. For instance, suppose
 -- you have an abstract syntax with interned symbols:
 --
 -- > data Lang = ... | Symbol Id
@@ -93,7 +94,7 @@ infixl 5 $$, $+$
 --
 -- > symbolName :: Store -> Id -> IO String
 --
--- A pretty printer for this syntax can be written thus:
+-- A pretty-printer for this syntax can be written thus:
 --
 -- > pp :: Lang -> PP Store IO Doc
 -- > pp (Symbol id) = do store <- ask
