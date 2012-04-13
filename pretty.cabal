@@ -1,5 +1,5 @@
 name:          pretty
-version:       1.1.1.0
+version:       1.1.2.0
 synopsis:      Pretty-printing library
 description:
         This package contains a pretty-printing library, a set of API's
@@ -30,7 +30,9 @@ Library
     exposed-modules:
         Text.PrettyPrint
         Text.PrettyPrint.HughesPJ
-    build-depends: base >= 3 && < 5
+        Text.PrettyPrint.Reader
+    build-depends: base >= 3 && < 5,
+                   mtl >= 2
     extensions: CPP, BangPatterns
     ghc-options: -Wall -fwarn-tabs
 
