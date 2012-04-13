@@ -83,6 +83,23 @@ infixl 5 $$, $+$
 
 --------------------------------------------------------------------------------
 
+-- | PP is a ReaderT monad transformer that allows lookups to be
+-- performed during the pretty printing process. For instance, suppose
+-- you have an abstract syntax with interned symbols:
+--
+-- > data Lang = ... | Symbol Id
+--
+-- and a lookup operation:
+--
+-- > symbolName :: Store -> Id -> IO String
+--
+-- A pretty printer for this syntax can be written thus:
+--
+-- > pp :: Lang -> PP Store IO Doc
+-- > pp (Symbol id) = do store <- ask
+-- >                     name <- lift $ symbolName store id
+-- >                     text name
+-- > pp (...) = ...
 type PP u m a = ReaderT u m a
 
 -- ---------------------------------------------------------------------------
