@@ -2,3 +2,5 @@ dist/
 GNUmakefile
 dist-install
 ghc.mk
+*.swp
+cabal-dev/
