@@ -83,6 +83,7 @@ module Text.PrettyPrint.HughesPJ (
 
 import Data.Monoid ( Monoid(mempty, mappend) )
 import Data.String ( IsString(fromString) )
+import Prelude hiding (log)
 
 -- ---------------------------------------------------------------------------
 -- The Doc calculus
@@ -175,7 +176,7 @@ infixl 5 $$, $+$
 data Doc m
   = Empty                                                 -- empty
   | NilAbove (Doc m)                                      -- text "" $$ x 
-  | TextBeside !TextDetails {-# UNPACK #-} !Int (Maybe m) (Doc m) -- text s <> x with optional log entry
+  | TextBeside !TextDetails {-# UNPACK #-} !Int [m] (Doc m) -- text s <> x with optional log entry
   | Nest {-# UNPACK #-} !Int (Doc m)                      -- nest k x
   | Union (Doc m) (Doc m)                                 -- ul `union` ur
   | NoDoc                                                 -- The empty set of documents
@@ -252,17 +253,25 @@ newline :: Position -> Position
 newline (Position r _) = Position (r + 1) 0
 
 type Log m = [(m, Position)]
+log :: Log m -> Position -> [m] -> Log m
+log l w os = zip os (repeat w) ++ l
 
 here :: m -> Doc m -> Doc m
-here o (TextBeside s sl Nothing p) = TextBeside s sl (Just o) p
-here _ _ = error "here"
+here _ Empty                  = Empty
+here o (NilAbove d)           = NilAbove (here o d)
+here o (TextBeside s sl l p)  = TextBeside s sl (o:l) p
+here o (Nest x d)             = Nest x (here o d)
+here o (Union d1 d2)          = Union (here o d1) (here o d2)
+here _ NoDoc                  = NoDoc
+here o (Beside d1 f d2)       = Beside (here o d1) f d2
+here o (Above d1 f d2)        = Above (here o d1) f d2
 
 -- ---------------------------------------------------------------------------
 -- Values and Predicates on GDocs and TextDetails
 
 -- | A document of height and width 1, containing a literal character.
 char :: Char -> Doc m
-char c = textBeside_ (Chr c) 1 Nothing Empty
+char c = textBeside_ (Chr c) 1 [] Empty
 
 -- | A document of height 1 containing a literal string.
 -- 'text' satisfies the following laws:
@@ -274,15 +283,15 @@ char c = textBeside_ (Chr c) 1 Nothing Empty
 -- The side condition on the last law is necessary because @'text' \"\"@
 -- has height 1, while 'empty' has no height.
 text :: String -> Doc m
-text s = case length s of {sl -> textBeside_ (Str s) sl Nothing Empty}
+text s = case length s of {sl -> textBeside_ (Str s) sl [] Empty}
 
 -- | Same as @text@. Used to be used for Bytestrings.
 ptext :: String -> Doc m
-ptext s = case length s of {sl -> textBeside_ (PStr s) sl Nothing Empty}
+ptext s = case length s of {sl -> textBeside_ (PStr s) sl [] Empty}
 
 -- | Some text with any width. (@text s = sizedText (length s) s@)
 sizedText :: Int -> String -> Doc m
-sizedText l s = textBeside_ (Str s) l Nothing Empty
+sizedText l s = textBeside_ (Str s) l [] Empty
 
 -- | Some text, but without any width. Use for non-printing text
 -- such as a HTML or Latex tags
@@ -470,7 +479,7 @@ nilAbove_ :: RDoc m -> RDoc m
 nilAbove_ p = NilAbove p
 
 -- Arg of a TextBeside is always an RDoc
-textBeside_ :: TextDetails -> Int -> Maybe m -> RDoc m -> RDoc m
+textBeside_ :: TextDetails -> Int -> [m] -> RDoc m -> RDoc m
 textBeside_ s sl l p = TextBeside s sl l p
 
 nest_ :: Int -> RDoc m -> RDoc m
@@ -549,7 +558,7 @@ nilAboveNest _ _ Empty       = Empty
                                -- Here's why the "text s <>" is in the spec!
 nilAboveNest g k (Nest k1 q) = nilAboveNest g (k + k1) q
 nilAboveNest g k q           | not g && k > 0      -- No newline if no overlap
-                             = textBeside_ (Str (indent k)) k Nothing q
+                             = textBeside_ (Str (indent k)) k [] q
                              | otherwise           -- Put them really above
                              = nilAbove_ (mkNest k q)
 
@@ -598,7 +607,7 @@ beside (TextBeside s sl l p) g q   = sl `seq` textBeside_ s sl l rest
 nilBeside :: Bool -> RDoc m -> RDoc m
 nilBeside _ Empty         = Empty -- Hence the text "" in the spec
 nilBeside g (Nest _ p)    = nilBeside g p
-nilBeside g p | g         = textBeside_ space_text 1 Nothing p
+nilBeside g p | g         = textBeside_ space_text 1 [] p
               | otherwise = p
 
 
@@ -892,8 +901,7 @@ easy_display nl_space_text choose txt end doc
     lay (Nest _ p) w l                  = lay p w l
     lay Empty _ l                       = (end, l)
     lay (NilAbove p) w l                = let (s', l') = lay p (newline w) l in (nl_space_text `txt` s', l')
-    lay (TextBeside s c Nothing p) w l  = let (s', l') = lay p (advance w c) l in (s `txt` s', l')
-    lay (TextBeside s c (Just o) p) w l = let (s', l') = lay p (advance w c) ((o, w) : l) in (s `txt` s', l')
+    lay (TextBeside s c os p) w l = let (s', l') = lay p (advance w c) (log l w os) in (s `txt` s', l')
     lay (Above {}) _ _                  = error "easy_display Above"
     lay (Beside {}) _ _                 = error "easy_display Beside"
 
@@ -906,7 +914,7 @@ display m !page_width !ribbon_width txt end doc
         lay k (Nest k1 p)  w l = lay (k + k1) p w l
         lay _ Empty        _ l = (end, l)
         lay k (NilAbove p) w l = let (s', l') = lay k p (newline w) l in (nl_text `txt` s', l')
-        lay k (TextBeside s sl mo p) w l
+        lay k (TextBeside s sl os p) w l
             = case m of
                     ZigZagMode |  k >= gap_width
                                -> let (s', l') = lay1 (k - shift) s sl p (newline (newline w)) l in
@@ -919,9 +927,7 @@ display m !page_width !ribbon_width txt end doc
                                   Str (replicate shift '\\') `txt` (
                                   nl_text `txt` s')), l')
 
-                    _ -> case mo of
-                      Just o ->  lay1 k s sl p w ((o, w) : l)
-                      Nothing -> lay1 k s sl p w l
+                    _ -> lay1 k s sl p w (log l w os)
         lay _ (Above {})   _ _ = error "display lay Above"
         lay _ (Beside {})  _ _ = error "display lay Beside"
         lay _ NoDoc        _ _ = error "display lay NoDoc"
@@ -932,16 +938,15 @@ display m !page_width !ribbon_width txt end doc
                                   (s', l') = lay2 r p (advance w (k + sl)) l
                              in (Str (indent k) `txt` (s `txt` s'), l')
 
-        lay2 k _ _ _ | k `seq` False            = undefined
-        lay2 k (NilAbove p)                 w l = let (s', l') = lay k p (newline w) l in (nl_text `txt` s', l')
-        lay2 k (TextBeside s sl Nothing p)  w l = let (s', l') = lay2 (k+sl) p (advance w sl) l in (s `txt` s', l')
-        lay2 k (TextBeside s sl (Just o) p) w l = let (s', l') = lay2 (k+sl) p (advance w sl) ((o, w):l) in (s `txt` s', l')
-        lay2 k (Nest _ p)                   w l = lay2 k p w l
-        lay2 _ Empty                        _ l = (end, l)
-        lay2 _ (Above {})                   _ _ = error "display lay2 Above"
-        lay2 _ (Beside {})                  _ _ = error "display lay2 Beside"
-        lay2 _ NoDoc                        _ _ = error "display lay2 NoDoc"
-        lay2 _ (Union {})                   _ _ = error "display lay2 Union"
+        lay2 k _ _ _ | k `seq` False      = undefined
+        lay2 k (NilAbove p)           w l = let (s', l') = lay k p (newline w) l in (nl_text `txt` s', l')
+        lay2 k (TextBeside s sl os p) w l = let (s', l') = lay2 (k+sl) p (advance w sl) (log l w os) in (s `txt` s', l')
+        lay2 k (Nest _ p)             w l = lay2 k p w l
+        lay2 _ Empty                  _ l = (end, l)
+        lay2 _ (Above {})             _ _ = error "display lay2 Above"
+        lay2 _ (Beside {})            _ _ = error "display lay2 Beside"
+        lay2 _ NoDoc                  _ _ = error "display lay2 NoDoc"
+        lay2 _ (Union {})             _ _ = error "display lay2 Union"
     in
     lay 0 doc (Position 0 0) []
     }}
