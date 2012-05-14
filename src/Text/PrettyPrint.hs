@@ -62,8 +62,14 @@ module Text.PrettyPrint (
 
         -- ** General rendering
         fullRender,
-        Mode(..), TextDetails(..)
+        Mode(..), TextDetails(..),
 
+        -- ** Logging
+        here,
+        Position(..), Log,
+        renderWithLog,
+        renderStyleWithLog,
+        fullRenderWithLog
     ) where
 
 import Text.PrettyPrint.HughesPJ

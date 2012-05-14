@@ -34,6 +34,18 @@ Library
     extensions: CPP, BangPatterns
     ghc-options: -Wall -fwarn-tabs
 
+Executable test
+    hs-source-dirs:
+        test
+        src
+    main-is: Main.hs
+    build-depends:
+        base >= 4 && < 5,
+        HUnit == 1.2.*,
+        test-framework == 0.6.*,
+        test-framework-hunit == 0.2.*
+    extensions: CPP, BangPatterns
+
 Test-Suite test-pretty
     type: exitcode-stdio-1.0
     hs-source-dirs: tests

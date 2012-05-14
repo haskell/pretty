@@ -245,7 +245,7 @@ instance Show (Doc m) where
 
 -- ---------------------------------------------------------------------------
 -- Logging
-data Position = Position {row :: !Int, column :: !Int}
+data Position = Position {row :: !Int, column :: !Int} deriving (Show, Eq)
 advance :: Position -> Int -> Position
 advance (Position r c) s = Position (r + s) c
 newline :: Position -> Position
