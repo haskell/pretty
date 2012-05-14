@@ -247,7 +247,7 @@ instance Show (Doc m) where
 -- Logging
 data Position = Position {row :: !Int, column :: !Int} deriving (Show, Eq)
 advance :: Position -> Int -> Position
-advance (Position r c) s = Position (r + s) c
+advance (Position r c) s = Position r (c + s)
 newline :: Position -> Position
 newline (Position r _) = Position (r + 1) 0
 
@@ -902,43 +902,47 @@ display m !page_width !ribbon_width txt end doc
   = case page_width - ribbon_width of { gap_width ->
     case gap_width `quot` 2 of { shift ->
     let
-        lay k _            | k `seq` False = undefined
-        lay k (Nest k1 p)  = lay (k + k1) p
-        lay _ Empty        = end
-        lay k (NilAbove p) = nl_text `txt` lay k p
-        lay k (TextBeside s sl _ p)
+        lay k _ _ _            | k `seq` False = undefined
+        lay k (Nest k1 p)  w l = lay (k + k1) p w l
+        lay _ Empty        _ l = (end, l)
+        lay k (NilAbove p) w l = let (s', l') = lay k p (newline w) l in (nl_text `txt` s', l')
+        lay k (TextBeside s sl mo p) w l
             = case m of
                     ZigZagMode |  k >= gap_width
-                               -> nl_text `txt` (
+                               -> let (s', l') = lay1 (k - shift) s sl p (newline (newline w)) l in
+                                  (nl_text `txt` (
                                   Str (replicate shift '/') `txt` (
-                                  nl_text `txt`
-                                  lay1 (k - shift) s sl p ))
-
+                                  nl_text `txt` s')), l')
                                |  k < 0
-                               -> nl_text `txt` (
+                               -> let (s', l') = lay1 (k + shift) s sl p (newline (newline w)) l in
+                                  (nl_text `txt` (
                                   Str (replicate shift '\\') `txt` (
-                                  nl_text `txt`
-                                  lay1 (k + shift) s sl p ))
+                                  nl_text `txt` s')), l')
 
-                    _ -> lay1 k s sl p
-        lay _ (Above {})   = error "display lay Above"
-        lay _ (Beside {})  = error "display lay Beside"
-        lay _ NoDoc        = error "display lay NoDoc"
-        lay _ (Union {})   = error "display lay Union"
+                    _ -> case mo of
+                      Just o ->  lay1 k s sl p w ((o, w) : l)
+                      Nothing -> lay1 k s sl p w l
+        lay _ (Above {})   _ _ = error "display lay Above"
+        lay _ (Beside {})  _ _ = error "display lay Beside"
+        lay _ NoDoc        _ _ = error "display lay NoDoc"
+        lay _ (Union {})   _ _ = error "display lay Union"
 
-        lay1 !k s !sl p    = let !r = k + sl
-                             in Str (indent k) `txt` (s `txt` lay2 r p)
+        lay1 !k s !sl p w l    = let
+                                  !r = k + sl
+                                  (s', l') = lay2 r p (advance w (k + sl)) l
+                             in (Str (indent k) `txt` (s `txt` s'), l')
 
-        lay2 k _ | k `seq` False   = undefined
-        lay2 k (NilAbove p)        = nl_text `txt` lay k p
-        lay2 k (TextBeside s sl _ p) = s `txt` lay2 (k + sl) p
-        lay2 k (Nest _ p)          = lay2 k p
-        lay2 _ Empty               = end
-        lay2 _ (Above {})          = error "display lay2 Above"
-        lay2 _ (Beside {})         = error "display lay2 Beside"
-        lay2 _ NoDoc               = error "display lay2 NoDoc"
-        lay2 _ (Union {})          = error "display lay2 Union"
+        lay2 k _ _ _ | k `seq` False            = undefined
+        lay2 k (NilAbove p)                 w l = let (s', l') = lay k p (newline w) l in (nl_text `txt` s', l')
+        lay2 k (TextBeside s sl Nothing p)  w l = let (s', l') = lay2 (k+sl) p (advance w sl) l in (s `txt` s', l')
+        lay2 k (TextBeside s sl (Just o) p) w l = let (s', l') = lay2 (k+sl) p (advance w sl) ((o, w):l) in (s `txt` s', l')
+        lay2 k (Nest _ p)                   w l = lay2 k p w l
+        lay2 _ Empty                        _ l = (end, l)
+        lay2 _ (Above {})                   _ _ = error "display lay2 Above"
+        lay2 _ (Beside {})                  _ _ = error "display lay2 Beside"
+        lay2 _ NoDoc                        _ _ = error "display lay2 NoDoc"
+        lay2 _ (Union {})                   _ _ = error "display lay2 Union"
     in
-    (lay 0 doc, [])
+    lay 0 doc (Position 0 0) []
     }}
 
