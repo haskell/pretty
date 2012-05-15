@@ -18,7 +18,7 @@ homepage:      http://github.com/haskell/pretty
 bug-reports:   http://hackage.haskell.org/trac/ghc/newticket?component=libraries/pretty
 stability:     Stable
 build-type:    Simple
-Extra-Source-Files: README CHANGELOG
+Extra-Source-Files: README.md CHANGELOG
 Cabal-Version: >= 1.8
 
 source-repository head

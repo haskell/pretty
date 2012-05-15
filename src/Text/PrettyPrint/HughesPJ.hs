@@ -74,7 +74,7 @@ module Text.PrettyPrint.HughesPJ (
 
         -- ** Logging
         here,
-        Position(..), Log,
+        Position(..), Logger,
         renderWithLog,
         renderStyleWithLog,
         fullRenderWithLog
@@ -176,7 +176,7 @@ infixl 5 $$, $+$
 data Doc m
   = Empty                                                 -- empty
   | NilAbove (Doc m)                                      -- text "" $$ x 
-  | TextBeside !TextDetails {-# UNPACK #-} !Int [m] (Doc m) -- text s <> x with optional log entry
+  | TextBeside !TextDetails {-# UNPACK #-} !Int (Maybe (Logger m)) (Doc m) -- text s <> x with optional log entry
   | Nest {-# UNPACK #-} !Int (Doc m)                      -- nest k x
   | Union (Doc m) (Doc m)                                 -- ul `union` ur
   | NoDoc                                                 -- The empty set of documents
@@ -238,40 +238,50 @@ instance Monoid (Doc m) where
 instance IsString (Doc m) where
     fromString = text
 
-instance Show (Doc m) where
-  showsPrec _ doc cont = fst $ fullRenderWithLog (mode style) (lineLength style)
-                                                 (ribbonsPerLine style)
-                                                 txtPrinter cont doc
+instance Monoid m => Show (Doc m) where
+  showsPrec _ doc cont = fst $
+                         fullRenderWithLog (mode style) (lineLength style)
+                                           (ribbonsPerLine style)
+                                           txtPrinter cont doc
 
 
 -- ---------------------------------------------------------------------------
 -- Logging
+
 data Position = Position {row :: !Int, column :: !Int} deriving (Show, Eq)
+
 advance :: Position -> Int -> Position
 advance (Position r c) s = Position r (c + s)
+
 newline :: Position -> Position
 newline (Position r _) = Position (r + 1) 0
 
-type Log m = [(m, Position)]
-log :: Log m -> Position -> [m] -> Log m
-log l w os = zip os (repeat w) ++ l
+type Logger m = Position -> m
 
-here :: m -> Doc m -> Doc m
-here _ Empty                  = Empty
-here o (NilAbove d)           = NilAbove (here o d)
-here o (TextBeside s sl l p)  = TextBeside s sl (o:l) p
-here o (Nest x d)             = Nest x (here o d)
-here o (Union d1 d2)          = Union (here o d1) (here o d2)
-here _ NoDoc                  = NoDoc
-here o (Beside d1 f d2)       = Beside (here o d1) f d2
-here o (Above d1 f d2)        = Above (here o d1) f d2
+log :: Monoid m => m -> (Maybe (Logger m)) -> Position -> m
+log m Nothing _  = m
+log m (Just l) w = m `mappend` l w
+
+mergeLogger :: Monoid m => Logger m -> Logger m -> Logger m
+mergeLogger l1 l2 = \p -> l1 p `mappend` l2 p
+
+here :: (Monoid m) => Logger m -> Doc m -> Doc m
+here _ Empty                         = Empty
+here l (NilAbove d)                  = NilAbove (here l d)
+here l (TextBeside s sl Nothing p)   = TextBeside s sl (Just l) p
+here l (TextBeside s sl (Just l') p) = TextBeside s sl (Just (mergeLogger l l')) p
+here l (Nest x d)                    = Nest x (here l d)
+here l (Union d1 d2)                 = Union (here l d1) (here l d2)
+here _ NoDoc                         = NoDoc
+here l (Beside d1 f d2)              = Beside (here l d1) f d2
+here l (Above d1 f d2)               = Above (here l d1) f d2
 
 -- ---------------------------------------------------------------------------
 -- Values and Predicates on GDocs and TextDetails
 
 -- | A document of height and width 1, containing a literal character.
 char :: Char -> Doc m
-char c = textBeside_ (Chr c) 1 [] Empty
+char c = textBeside_ (Chr c) 1 Nothing Empty
 
 -- | A document of height 1 containing a literal string.
 -- 'text' satisfies the following laws:
@@ -283,15 +293,15 @@ char c = textBeside_ (Chr c) 1 [] Empty
 -- The side condition on the last law is necessary because @'text' \"\"@
 -- has height 1, while 'empty' has no height.
 text :: String -> Doc m
-text s = case length s of {sl -> textBeside_ (Str s) sl [] Empty}
+text s = case length s of {sl -> textBeside_ (Str s) sl Nothing Empty}
 
 -- | Same as @text@. Used to be used for Bytestrings.
 ptext :: String -> Doc m
-ptext s = case length s of {sl -> textBeside_ (PStr s) sl [] Empty}
+ptext s = case length s of {sl -> textBeside_ (PStr s) sl Nothing Empty}
 
 -- | Some text with any width. (@text s = sizedText (length s) s@)
 sizedText :: Int -> String -> Doc m
-sizedText l s = textBeside_ (Str s) l [] Empty
+sizedText l s = textBeside_ (Str s) l Nothing Empty
 
 -- | Some text, but without any width. Use for non-printing text
 -- such as a HTML or Latex tags
@@ -479,7 +489,7 @@ nilAbove_ :: RDoc m -> RDoc m
 nilAbove_ p = NilAbove p
 
 -- Arg of a TextBeside is always an RDoc
-textBeside_ :: TextDetails -> Int -> [m] -> RDoc m -> RDoc m
+textBeside_ :: TextDetails -> Int -> (Maybe (Logger m)) -> RDoc m -> RDoc m
 textBeside_ s sl l p = TextBeside s sl l p
 
 nest_ :: Int -> RDoc m -> RDoc m
@@ -558,7 +568,7 @@ nilAboveNest _ _ Empty       = Empty
                                -- Here's why the "text s <>" is in the spec!
 nilAboveNest g k (Nest k1 q) = nilAboveNest g (k + k1) q
 nilAboveNest g k q           | not g && k > 0      -- No newline if no overlap
-                             = textBeside_ (Str (indent k)) k [] q
+                             = textBeside_ (Str (indent k)) k Nothing q
                              | otherwise           -- Put them really above
                              = nilAbove_ (mkNest k q)
 
@@ -607,7 +617,7 @@ beside (TextBeside s sl l p) g q   = sl `seq` textBeside_ s sl l rest
 nilBeside :: Bool -> RDoc m -> RDoc m
 nilBeside _ Empty         = Empty -- Hence the text "" in the spec
 nilBeside g (Nest _ p)    = nilBeside g p
-nilBeside g p | g         = textBeside_ space_text 1 [] p
+nilBeside g p | g         = textBeside_ space_text 1 Nothing p
               | otherwise = p
 
 
@@ -830,20 +840,20 @@ data Mode = PageMode     -- ^ Normal
           | OneLineMode  -- ^ All on one line
 
 -- | Render the @Doc@ to a String using the default @Style@.
-render :: Doc m -> String
+render :: Doc () -> String
 render = fst . renderWithLog
 
 -- | Render the @Doc@ to a String using the default @Style@. Also retrieve the log of @here@s.
-renderWithLog :: Doc m -> (String, Log m)
+renderWithLog :: Monoid m => Doc m -> (String, m)
 renderWithLog doc = fullRenderWithLog (mode style) (lineLength style) (ribbonsPerLine style)
                         txtPrinter "" doc
 
 -- | Render the @Doc@ to a String using the given @Style@.
-renderStyle :: Style -> Doc m -> String
+renderStyle :: Style -> Doc ()  -> String
 renderStyle s = fst . renderStyleWithLog s
 
 -- | Render the @Doc@ to a String using the given @Style@. Also retrieve the log of @here@s.
-renderStyleWithLog :: Style -> Doc m -> (String, Log m)
+renderStyleWithLog :: Monoid m => Style -> Doc m -> (String, m)
 renderStyleWithLog s doc = fullRenderWithLog (mode s) (lineLength s) (ribbonsPerLine s)
                     txtPrinter "" doc
 
@@ -859,95 +869,105 @@ fullRender :: Mode                     -- ^ Rendering mode
            -> Float                    -- ^ Ribbons per line
            -> (TextDetails -> a -> a)  -- ^ What to do with text
            -> a                        -- ^ What to do at the end
-           -> Doc m                    -- ^ The document
+           -> Doc ()                   -- ^ The document
            -> a                        -- ^ Result
-fullRender a b c d e f = fst $ fullRenderWithLog a b c d e f
+fullRender m lineLen ribbons txt rest doc =
+  fst $ fullRenderWithLog m lineLen ribbons txt rest doc
 
 -- | The general re-ndering interface with logging.
-fullRenderWithLog  :: Mode                     -- ^ Rendering mode
+fullRenderWithLog  :: Monoid m
+                   => Mode                     -- ^ Rendering mode
                    -> Int                      -- ^ Line length
                    -> Float                    -- ^ Ribbons per line
                    -> (TextDetails -> a -> a)  -- ^ What to do with text
                    -> a                        -- ^ What to do at the end
                    -> Doc m                    -- ^ The document
-                   -> (a, Log m)               -- ^ Result
+                   -> (a, m)                   -- ^ Result
 fullRenderWithLog OneLineMode _ _ txt end doc
   = easy_display space_text (\_ y -> y) txt end (reduceDoc doc)
 fullRenderWithLog LeftMode    _ _ txt end doc
   = easy_display nl_text first txt end (reduceDoc doc)
 
-fullRenderWithLog m lineLen ribbons txt rest doc
-  = display m lineLen ribbonLen txt rest doc'
+fullRenderWithLog mode_ lineLen ribbons txt rest doc
+  = display mode_ lineLen ribbonLen txt rest doc'
   where
     doc' = best bestLineLen ribbonLen (reduceDoc doc)
 
     bestLineLen, ribbonLen :: Int
     ribbonLen   = round (fromIntegral lineLen / ribbons)
-    bestLineLen = case m of
+    bestLineLen = case mode_ of
                       ZigZagMode -> maxBound
                       _          -> lineLen
 
-easy_display :: TextDetails
+easy_display :: Monoid m
+             => TextDetails
              -> (Doc m -> Doc m -> Doc m)
              -> (TextDetails -> a -> a)
              -> a
              -> Doc m
-             -> (a, Log m)
+             -> (a, m)
 easy_display nl_space_text choose txt end doc
-  = lay doc (Position 0 0) []
+  = lay doc (Position 0 0) mempty
   where
-    lay NoDoc _ _                       = error "easy_display: NoDoc"
-    lay (Union p q) w l                 = lay (choose p q) w l
-    lay (Nest _ p) w l                  = lay p w l
-    lay Empty _ l                       = (end, l)
-    lay (NilAbove p) w l                = let (s', l') = lay p (newline w) l in (nl_space_text `txt` s', l')
-    lay (TextBeside s c os p) w l = let (s', l') = lay p (advance w c) (log l w os) in (s `txt` s', l')
-    lay (Above {}) _ _                  = error "easy_display Above"
-    lay (Beside {}) _ _                 = error "easy_display Beside"
+    lay NoDoc                       _ _ = error "easy_display: NoDoc"
+    lay (Union p q)                 w m = lay (choose p q) w m
+    lay (Nest _ p)                  w m = lay p w m
+    lay Empty                       _ m = (end, m)
+    lay (NilAbove p)                w m = let (s', m') = lay p (newline w) m in (nl_space_text `txt` s', m')
+    lay (TextBeside s c l p)  w m = let (s', l') = lay p (advance w c) (log m l w) in (s `txt` s', l')
+    lay (Above {})                  _ _ = error "easy_display Above"
+    lay (Beside {})                 _ _ = error "easy_display Beside"
 
-display :: Mode -> Int -> Int -> (TextDetails -> a -> a) -> a -> Doc m -> (a, Log m)
-display m !page_width !ribbon_width txt end doc
+display :: Monoid m
+        => Mode
+        -> Int
+        -> Int
+        -> (TextDetails -> a -> a)
+        -> a
+        -> Doc m
+        -> (a, m)
+display mode_ !page_width !ribbon_width txt end doc
   = case page_width - ribbon_width of { gap_width ->
     case gap_width `quot` 2 of { shift ->
     let
-        lay k _ _ _            | k `seq` False = undefined
-        lay k (Nest k1 p)  w l = lay (k + k1) p w l
-        lay _ Empty        _ l = (end, l)
-        lay k (NilAbove p) w l = let (s', l') = lay k p (newline w) l in (nl_text `txt` s', l')
-        lay k (TextBeside s sl os p) w l
-            = case m of
+        lay k _                     _ _ | k `seq` False = undefined
+        lay k (Nest k1 p)           w m = lay (k + k1) p w m
+        lay _ Empty                 _ m = (end, m)
+        lay k (NilAbove p)          w m = let (s', m') = lay k p (newline w) m in (nl_text `txt` s', m')
+        lay k (TextBeside s sl l p) w m
+            = case mode_ of
                     ZigZagMode |  k >= gap_width
-                               -> let (s', l') = lay1 (k - shift) s sl p (newline (newline w)) l in
+                               -> let (s', m') = lay1 (k - shift) s sl p (newline (newline w)) (log m l w) in
                                   (nl_text `txt` (
                                   Str (replicate shift '/') `txt` (
-                                  nl_text `txt` s')), l')
+                                  nl_text `txt` s')), m')
                                |  k < 0
-                               -> let (s', l') = lay1 (k + shift) s sl p (newline (newline w)) l in
+                               -> let (s', m') = lay1 (k + shift) s sl p (newline (newline w)) (log m l w) in
                                   (nl_text `txt` (
                                   Str (replicate shift '\\') `txt` (
-                                  nl_text `txt` s')), l')
+                                  nl_text `txt` s')), m')
 
-                    _ -> lay1 k s sl p w (log l w os)
-        lay _ (Above {})   _ _ = error "display lay Above"
-        lay _ (Beside {})  _ _ = error "display lay Beside"
-        lay _ NoDoc        _ _ = error "display lay NoDoc"
-        lay _ (Union {})   _ _ = error "display lay Union"
+                    _ -> lay1 k s sl p w (log m l w)
+        lay _ (Above {})            _ _ = error "display lay Above"
+        lay _ (Beside {})           _ _ = error "display lay Beside"
+        lay _ NoDoc                 _ _ = error "display lay NoDoc"
+        lay _ (Union {})            _ _ = error "display lay Union"
 
         lay1 !k s !sl p w l    = let
                                   !r = k + sl
                                   (s', l') = lay2 r p (advance w (k + sl)) l
                              in (Str (indent k) `txt` (s `txt` s'), l')
 
-        lay2 k _ _ _ | k `seq` False      = undefined
-        lay2 k (NilAbove p)           w l = let (s', l') = lay k p (newline w) l in (nl_text `txt` s', l')
-        lay2 k (TextBeside s sl os p) w l = let (s', l') = lay2 (k+sl) p (advance w sl) (log l w os) in (s `txt` s', l')
-        lay2 k (Nest _ p)             w l = lay2 k p w l
-        lay2 _ Empty                  _ l = (end, l)
-        lay2 _ (Above {})             _ _ = error "display lay2 Above"
-        lay2 _ (Beside {})            _ _ = error "display lay2 Beside"
-        lay2 _ NoDoc                  _ _ = error "display lay2 NoDoc"
-        lay2 _ (Union {})             _ _ = error "display lay2 Union"
+        lay2 k _ _ _ | k `seq` False     = undefined
+        lay2 k (NilAbove p)          w m = let (s', m') = lay k p (newline w) m in (nl_text `txt` s', m')
+        lay2 k (TextBeside s sl l p) w m = let (s', m') = lay2 (k+sl) p (advance w sl) (log m l w) in (s `txt` s', m')
+        lay2 k (Nest _ p)            w m = lay2 k p w m
+        lay2 _ Empty                 _ m = (end, m)
+        lay2 _ (Above {})            _ _ = error "display lay2 Above"
+        lay2 _ (Beside {})           _ _ = error "display lay2 Beside"
+        lay2 _ NoDoc                 _ _ = error "display lay2 NoDoc"
+        lay2 _ (Union {})            _ _ = error "display lay2 Union"
     in
-    lay 0 doc (Position 0 0) []
+    lay 0 doc (Position 0 0) mempty
     }}
 

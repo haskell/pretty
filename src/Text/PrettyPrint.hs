@@ -66,7 +66,7 @@ module Text.PrettyPrint (
 
         -- ** Logging
         here,
-        Position(..), Log,
+        Position(..), Logger,
         renderWithLog,
         renderStyleWithLog,
         fullRenderWithLog
