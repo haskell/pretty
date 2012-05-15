@@ -10,7 +10,7 @@ main = defaultMain [test_one_liner_mode, test_left_mode, test_page_mode, test_zi
 
 type Log = [(Int, Position)]
 
-mark :: Int -> Doc Log -> Doc Log
+mark :: Int -> DocL Log -> DocL Log
 mark x d = here (\p -> [(x, p)]) d
 
 test_one_liner_mode :: Test
@@ -48,10 +48,10 @@ test_zig_zag_mode = enumTestGroup "ZigZagMode" ZigZagMode [
     ) 
   ]
 
-enumTestGroup :: String -> Mode -> [(Doc Log, String, Log)] -> Test -- {{{1
+enumTestGroup :: String -> Mode -> [(DocL Log, String, Log)] -> Test -- {{{1
 enumTestGroup name mode tests = testGroup name $ zipWith (testCase . show) [(1::Int)..] $ map (runTest mode) tests
 
-runTest :: Mode -> (Doc Log, String, Log) -> Assertion -- {{{1
+runTest :: Mode -> (DocL Log, String, Log) -> Assertion -- {{{1
 runTest mode (doc, str, log) = do
   let (str', log') = renderStyleWithLog (style {mode = mode}) doc
   str @=? str'

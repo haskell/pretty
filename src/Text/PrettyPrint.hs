@@ -23,7 +23,7 @@
 module Text.PrettyPrint ( 
 
         -- * The document type
-        Doc,
+        Doc, DocL,
 
         -- * Constructing documents
 
