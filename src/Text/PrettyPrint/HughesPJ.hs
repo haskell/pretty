@@ -252,11 +252,14 @@ instance Monoid m => Show (DocL m) where
 
 data Position = Position {row :: !Int, column :: !Int} deriving (Show, Eq)
 
+start :: Position
+start = Position 1 1
+
 advance :: Position -> Int -> Position
 advance (Position r c) s = Position r (c + s)
 
 newline :: Position -> Position
-newline (Position r _) = Position (r + 1) 0
+newline (Position r _) = Position (r + 1) 1
 
 type Logger m = Position -> m
 
@@ -909,7 +912,7 @@ easy_display :: Monoid m
              -> DocL m
              -> (a, m)
 easy_display nl_space_text choose txt end doc
-  = lay doc (Position 0 0) mempty
+  = lay doc start mempty
   where
     lay NoDoc                       _ _ = error "easy_display: NoDoc"
     lay (Union p q)                 w m = lay (choose p q) w m
@@ -970,6 +973,6 @@ display mode_ !page_width !ribbon_width txt end doc
         lay2 _ NoDoc                 _ _ = error "display lay2 NoDoc"
         lay2 _ (Union {})            _ _ = error "display lay2 Union"
     in
-    lay 0 doc (Position 0 0) mempty
+    lay 0 doc start mempty
     }}
 

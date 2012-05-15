@@ -15,36 +15,36 @@ mark x d = here (\p -> [(x, p)]) d
 
 test_one_liner_mode :: Test
 test_one_liner_mode = enumTestGroup "OneLineMode" OneLineMode [
-  (0 `mark` text "start" <> 1 `mark` text "stop", "startstop", [(0, Position 0 0), (1, Position 0 5)])
+  (0 `mark` text "start" <> 1 `mark` text "stop", "startstop", [(0, Position 1 1), (1, Position 1 6)])
   ]
 
 test_left_mode :: Test
 test_left_mode = enumTestGroup "LeftMode" LeftMode [
-    (0 `mark` text "start" <> 1 `mark` text "stop", "startstop", [(0, Position 0 0), (1, Position 0 5)])
+    (0 `mark` text "start" <> 1 `mark` text "stop", "startstop", [(0, Position 1 1), (1, Position 1 6)])
   , (
       0 `mark` text "start" $$ 1 `mark` text "stop",
       "start\nstop",
-      [(0, Position 0 0), (1, Position 1 0)]
+      [(0, Position 1 1), (1, Position 2 1)]
     ) 
   ]
 
 test_page_mode :: Test
 test_page_mode = enumTestGroup "PageMode" PageMode [
-    (0 `mark` text "start" <> 1 `mark` text "stop", "startstop", [(0, Position 0 0), (1, Position 0 5)])
+    (0 `mark` text "start" <> 1 `mark` text "stop", "startstop", [(0, Position 1 1), (1, Position 1 6)])
   , (
       0 `mark` text "start" $$ 1 `mark` text "stop",
       "start\nstop",
-      [(0, Position 0 0), (1, Position 1 0)]
+      [(0, Position 1 1), (1, Position 2 1)]
     ) 
   ]
 
 test_zig_zag_mode :: Test
 test_zig_zag_mode = enumTestGroup "ZigZagMode" ZigZagMode [
-    (0 `mark` text "start" <> 1 `mark` text "stop", "startstop", [(0, Position 0 0), (1, Position 0 5)])
+    (0 `mark` text "start" <> 1 `mark` text "stop", "startstop", [(0, Position 1 1), (1, Position 1 6)])
   , (
       0 `mark` text "start" $$ 1 `mark` text "stop",
       "start\nstop",
-      [(0, Position 0 0), (1, Position 1 0)]
+      [(0, Position 1 1), (1, Position 2 1)]
     ) 
   ]
 
