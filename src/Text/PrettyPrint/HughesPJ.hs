@@ -271,13 +271,13 @@ mergeLogger :: Monoid m => Logger m -> Logger m -> Logger m
 mergeLogger l1 l2 = \p -> l1 p `mappend` l2 p
 
 here :: (Monoid m) => Logger m -> DocL m -> DocL m
-here _ Empty                         = Empty
+here _ Empty                         = error "here applied to Empty"
 here l (NilAbove d)                  = NilAbove (here l d)
 here l (TextBeside s sl Nothing p)   = TextBeside s sl (Just l) p
 here l (TextBeside s sl (Just l') p) = TextBeside s sl (Just (mergeLogger l l')) p
 here l (Nest x d)                    = Nest x (here l d)
 here l (Union d1 d2)                 = Union (here l d1) (here l d2)
-here _ NoDoc                         = NoDoc
+here _ NoDoc                         = error "here appliead to NoDoc"
 here l (Beside d1 f d2)              = Beside (here l d1) f d2
 here l (Above d1 f d2)               = Above (here l d1) f d2
 
