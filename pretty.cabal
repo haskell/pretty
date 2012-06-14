@@ -1,5 +1,5 @@
 name:          pretty
-version:       1.1.1.0
+version:       1.2
 synopsis:      Pretty-printing library
 description:
         This package contains a pretty-printing library, a set of API's
@@ -18,7 +18,7 @@ homepage:      http://github.com/haskell/pretty
 bug-reports:   http://hackage.haskell.org/trac/ghc/newticket?component=libraries/pretty
 stability:     Stable
 build-type:    Simple
-Extra-Source-Files: README CHANGELOG
+Extra-Source-Files: README.md CHANGELOG
 Cabal-Version: >= 1.8
 
 source-repository head
@@ -33,6 +33,18 @@ Library
     build-depends: base >= 3 && < 5
     extensions: CPP, BangPatterns
     ghc-options: -Wall -fwarn-tabs
+
+Executable test
+    hs-source-dirs:
+        test
+        src
+    main-is: Main.hs
+    build-depends:
+        base >= 4 && < 5,
+        HUnit == 1.2.*,
+        test-framework == 0.6.*,
+        test-framework-hunit == 0.2.*
+    extensions: CPP, BangPatterns
 
 Test-Suite test-pretty
     type: exitcode-stdio-1.0

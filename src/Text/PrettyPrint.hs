@@ -23,7 +23,7 @@
 module Text.PrettyPrint ( 
 
         -- * The document type
-        Doc,
+        Doc, DocL,
 
         -- * Constructing documents
 
@@ -62,8 +62,14 @@ module Text.PrettyPrint (
 
         -- ** General rendering
         fullRender,
-        Mode(..), TextDetails(..)
+        Mode(..), TextDetails(..),
 
+        -- ** Logging
+        here,
+        Position(..), Logger,
+        renderWithLog,
+        renderStyleWithLog,
+        fullRenderWithLog
     ) where
 
 import Text.PrettyPrint.HughesPJ
