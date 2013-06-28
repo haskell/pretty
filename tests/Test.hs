@@ -38,7 +38,7 @@ main = do
 
 -- tweaked to perform many small tests
 myConfig :: Int -> Int -> Args
-myConfig d n = stdArgs { maxSize = d, maxDiscard = n*5 }
+myConfig d n = stdArgs { maxSize = d, maxDiscardRatio = n*5 }
 
 maxTests :: Int
 maxTests = 1000
