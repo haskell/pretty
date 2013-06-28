@@ -15,7 +15,9 @@
 import PrettyTestVersion
 import TestGenerators
 import TestStructures
+import TestLargePretty
 
+import Control.Exception
 import Control.Monad
 import Data.Char (isSpace)
 import Data.List (intersperse)
@@ -25,7 +27,8 @@ import Test.QuickCheck
 
 main :: IO ()
 main = do
-    check_laws 
+    large_doc
+    check_laws
     check_invariants
     check_improvements
     check_non_prims -- hpc full coverage
@@ -56,6 +59,16 @@ myTest' d n msg t = do
 
 myAssert :: String -> Bool -> IO ()
 myAssert msg b = putStrLn $ (if b then "Ok, passed " else "Failed test:\n  ") ++ msg
+
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-- Ordinary tests
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+large_doc :: IO ()
+large_doc = do
+  putStrLn "Testing large doc..."
+  evaluate largeDocRender
+  return ()
 
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 -- Quickcheck tests
