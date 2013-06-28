@@ -51,6 +51,7 @@ Test-Suite test-pretty
         TestStructures
         UnitPP1
         UnitT3911
+        TestLargePretty
     extensions: CPP, BangPatterns, DeriveGeneric
     include-dirs: src/Text/PrettyPrint
 
