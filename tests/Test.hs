@@ -27,13 +27,13 @@ import Test.QuickCheck
 
 main :: IO ()
 main = do
-    large_doc
     check_laws
     check_invariants
     check_improvements
     check_non_prims -- hpc full coverage
     check_rendering
     check_list_def
+    large_doc
 
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 -- Utility functions
