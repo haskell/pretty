@@ -39,21 +39,24 @@ Test-Suite test-pretty
     hs-source-dirs: tests
                     src
     build-depends: base >= 3 && < 5,
-                   QuickCheck == 2.*
+                   QuickCheck == 2.*,
+                   deepseq == 1.3.*
     main-is: Test.hs
     other-modules:
         TestGenerators
         TestStructures
+        TestLargePretty
     extensions: CPP, BangPatterns
     include-dirs: src/Text/PrettyPrint
 
--- Executable Bench1
---     main-is: Bench1.hs
---     hs-source-dirs: test
---                     src
---     other-modules:
---         Text.PrettyPrint
---         Text.PrettyPrint.HughesPJ
---     extensions: CPP, BangPatterns
---     ghc-options: -O -fwarn-tabs
+Executable Bench1
+    main-is: Bench1.hs
+    build-depends: base >= 3 && < 5
+    hs-source-dirs: tests
+                    src
+    other-modules:
+        Text.PrettyPrint
+        Text.PrettyPrint.HughesPJ
+    extensions: CPP, BangPatterns
+    ghc-options: -O -fwarn-tabs
 
