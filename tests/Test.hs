@@ -29,7 +29,6 @@ import Test.QuickCheck
 
 main :: IO ()
 main = do
-    large_doc
     check_laws
     check_invariants
     check_improvements
@@ -38,6 +37,7 @@ main = do
     check_list_def
     testPP1
     testT3911
+    large_doc
 
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 -- Utility functions
