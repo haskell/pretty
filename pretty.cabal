@@ -1,5 +1,5 @@
 name:          pretty
-version:       1.1.1.0
+version:       1.1.1.1
 synopsis:      Pretty-printing library
 description:
         This package contains a pretty-printing library, a set of API's
@@ -15,7 +15,7 @@ license-file:  LICENSE
 category:      Text
 maintainer:    David Terei <dave.terei@gmail.com>
 homepage:      http://github.com/haskell/pretty
-bug-reports:   http://hackage.haskell.org/trac/ghc/newticket?component=libraries/pretty
+bug-reports:   http://github.com/haskell/pretty/issues
 stability:     Stable
 build-type:    Simple
 Extra-Source-Files: README CHANGELOG
