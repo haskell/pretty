@@ -1,4 +1,4 @@
-I want to eliminate the duplicate of this library in
+1. I want to eliminate the duplicate of this library in
 GHC. The underlying TextDetails store types are different
 though which is a problem:
 
@@ -17,6 +17,9 @@ though which is a problem:
 
 Also would be useful to provide render functions to produce
 Bytestring / Text builders.
+
+2. Add monadic wrapper (check out haskell-src-exts for example although maybe
+use a transformer monand...)
 
 ===========================================================
 
