@@ -13,12 +13,12 @@ description:
 license:       BSD3
 license-file:  LICENSE
 category:      Text
-maintainer:    David Terei <dave.terei@gmail.com>
+maintainer:    David Terei <code@davidterei.com>
 homepage:      http://github.com/haskell/pretty
 bug-reports:   http://github.com/haskell/pretty/issues
 stability:     Stable
 build-type:    Simple
-Extra-Source-Files: README CHANGELOG
+Extra-Source-Files: README.md CHANGELOG.md
 Cabal-Version: >= 1.8
 
 source-repository head
@@ -39,7 +39,7 @@ Test-Suite test-pretty
     hs-source-dirs: tests
                     src
     build-depends: base >= 3 && < 5,
-                   QuickCheck == 2.*
+                   QuickCheck >= 2.5 && <3
     main-is: Test.hs
     other-modules:
         TestGenerators

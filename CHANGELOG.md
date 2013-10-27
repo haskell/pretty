@@ -1,8 +1,11 @@
-======== CHANGE LOG ==========
+# Pretty library change log
 
-Pretty library change log.
+## 1.1.1.1
 
-========= Version 4.0, 24 August 2011 ==========
+* Update pretty cabal file and readme.
+* Fix tests to work with latest quickcheck.
+
+## Version 4.0, 24 August 2011
 
 * Big change to the structure of the library. Now we don't have a fixed
   TextDetails data type for storing the various String types that we
@@ -15,7 +18,7 @@ Pretty library change log.
   module uses it to implement the old API. The Text.PrettyPrint.HughesPJ
   module has been left unchanged for a compatability module but deprecated.
 
-========= Version 3.0, 28 May 1987 ==========
+## Version 3.0, 28 May 1987
 
 * Cured massive performance bug. If you write:
 
@@ -75,9 +78,7 @@ Pretty library change log.
   -> IO () -> IO ()), rather than producing a string that you then
   print.
 
-
-
-========= Version 3.0, 28 May 1987 ==========
+## Version 3.0, 28 May 1987
 
 * Made empty into a left unit for <> as well as a right unit;
   it is also now true that
@@ -90,9 +91,7 @@ Pretty library change log.
 
 * Corrected and tidied up the laws and invariants
 
-
-
-========= Version 1.0 ==========
+## Version 1.0
 
 Relative to John's original paper, there are the following new features:
 
@@ -165,5 +164,4 @@ Relative to John's original paper, there are the following new features:
 
 6. Numerous implementation tidy-ups
    Use of unboxed data types to speed up the implementation
-
 
