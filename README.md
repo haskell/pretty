@@ -5,9 +5,10 @@ way to easily print out text in a consistent format of your choosing.
 This is useful for compilers and related tools.
 
 It is based on the pretty-printer outlined in the  paper 'The Design
-of a Pretty-printing Library' in Advanced Functional Programming,
-Johan Jeuring and Erik Meijer (eds), LNCS 925
-<http://www.cs.chalmers.se/~rjmh/Papers/pretty.ps>
+of a Pretty-printing Library' by John Hughes in Advanced Functional
+Programming, 1995. It can be found
+[here](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.38.8777).
+
 
 ## Licensing
 
