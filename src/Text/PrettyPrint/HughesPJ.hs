@@ -75,8 +75,10 @@ module Text.PrettyPrint.HughesPJ (
     ) where
 #endif
 
-import Data.Monoid ( Monoid(mempty, mappend) )
-import Data.String ( IsString(fromString) )
+import Control.DeepSeq ( NFData(rnf) )
+import Data.Function   ( on )
+import Data.Monoid     ( Monoid(mempty, mappend) )
+import Data.String     ( IsString(fromString) )
 
 -- ---------------------------------------------------------------------------
 -- The Doc calculus
@@ -235,6 +237,24 @@ instance Show Doc where
   showsPrec _ doc cont = fullRender (mode style) (lineLength style)
                                     (ribbonsPerLine style)
                                     txtPrinter cont doc
+
+instance Eq Doc where
+  (==) = (==) `on` render
+
+instance NFData Doc where
+  rnf Empty               = ()
+  rnf (NilAbove d)        = rnf d
+  rnf (TextBeside td i d) = rnf td `seq` rnf i `seq` rnf d
+  rnf (Nest k d)          = rnf k  `seq` rnf d
+  rnf (Union ur ul)       = rnf ur `seq` rnf ul
+  rnf NoDoc               = ()
+  rnf (Beside ld s rd)    = rnf ld `seq` rnf s `seq` rnf rd
+  rnf (Above ud s ld)     = rnf ud `seq` rnf s `seq` rnf ld
+
+instance NFData TextDetails where
+  rnf (Chr c)    = rnf c
+  rnf (Str str)  = rnf str
+  rnf (PStr str) = rnf str
 
 -- ---------------------------------------------------------------------------
 -- Values and Predicates on GDocs and TextDetails
