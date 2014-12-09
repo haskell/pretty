@@ -1,5 +1,7 @@
 # Pretty : A Haskell Pretty-printer library
 
+[![Hackage version](https://img.shields.io/hackage/v/hlint.svg?style=flat)](https://hackage.haskell.org/package/pretty) [![Build Status](https://img.shields.io/travis/haskell/pretty.svg?style=flat)](https://travis-ci.org/haskell/pretty)
+
 Pretty is a pretty-printing library, a set of API's that provides a
 way to easily print out text in a consistent format of your choosing.
 This is useful for compilers and related tools.
