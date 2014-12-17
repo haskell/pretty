@@ -806,7 +806,7 @@ oneLiner (Beside {})         = error "oneLiner Beside"
 data Style
   = Style { mode           :: Mode  -- ^ The rendering mode
           , lineLength     :: Int   -- ^ Length of line, in chars
-          , ribbonsPerLine :: Float -- ^ Ratio of ribbon length to line length
+          , ribbonsPerLine :: Float -- ^ Ratio of line length to ribbon length
           }
 
 -- | The default style (@mode=PageMode, lineLength=100, ribbonsPerLine=1.5@).
