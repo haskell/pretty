@@ -1,12 +1,14 @@
+language: haskell
 env:
-  - CABALVER=1.16 GHCVER=7.4.1
-  - CABALVER=1.16 GHCVER=7.4.2
-  - CABALVER=1.16 GHCVER=7.6.1
-  - CABALVER=1.16 GHCVER=7.6.2
-  - CABALVER=1.16 GHCVER=7.6.3
-  - CABALVER=1.18 GHCVER=7.8.1
-  - CABALVER=1.18 GHCVER=7.8.2
-  - CABALVER=1.18 GHCVER=7.8.3
+  - CABALVER=1.18 GHCVER=7.4.1
+  - CABALVER=1.18 GHCVER=7.4.2
+  - CABALVER=1.18 GHCVER=7.6.1
+  - CABALVER=1.18 GHCVER=7.6.2
+  - CABALVER=1.18 GHCVER=7.6.3
+  - CABALVER=1.20 GHCVER=7.8.1
+  - CABALVER=1.20 GHCVER=7.8.2
+  - CABALVER=1.20 GHCVER=7.8.3
+  - CABALVER=1.20 GHCVER=7.8.3
   - CABALVER=head GHCVER=head
 
 matrix:
@@ -25,6 +27,7 @@ install:
   - travis_retry cabal update
 
 script:
+ - cabal install --only-dependencies --enable-tests
  - cabal configure -v2
  - cabal build
  - cabal check || [ "$CABALVER" == "1.16" ]
