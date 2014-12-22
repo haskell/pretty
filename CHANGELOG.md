@@ -1,6 +1,10 @@
 # Pretty library change log
 
-## 1.1.1.1
+## 1.1.1.2 -- 18th August, 2014
+
+* Add NFData and Eq instances (by Ivan Lazar Miljenovic).
+
+## 1.1.1.1 -- 27th October, 2013
 
 * Update pretty cabal file and readme.
 * Fix tests to work with latest quickcheck.
