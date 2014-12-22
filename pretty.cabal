@@ -31,7 +31,7 @@ Library
         Text.PrettyPrint
         Text.PrettyPrint.HughesPJ
     build-depends: base >= 3 && < 5,
-                   deepseq >= 1.1 && < 1.4
+                   deepseq >= 1.1
     extensions: CPP, BangPatterns
     ghc-options: -Wall -fwarn-tabs
 
