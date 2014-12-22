@@ -14,19 +14,6 @@
 * Update pretty cabal file and readme.
 * Fix tests to work with latest quickcheck.
 
-## Version 4.0, 24 August 2011
-
-* Big change to the structure of the library. Now we don't have a fixed
-  TextDetails data type for storing the various String types that we
-  support. Instead we have changed that to be a type class that just
-  provides a way to convert String and Chars to an arbitary type. This
-  arbitary type is now provided by the user of the library so that they
-  can implement support very easily for any String type they want.
-
-  This new code lives in Text.PrettyPrint.Core and the Text.PrettyPrint
-  module uses it to implement the old API. The Text.PrettyPrint.HughesPJ
-  module has been left unchanged for a compatability module but deprecated.
-
 ## Version 3.0, 28 May 1987
 
 * Cured massive performance bug. If you write:
