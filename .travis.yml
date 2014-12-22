@@ -27,10 +27,12 @@ install:
   - travis_retry cabal update
 
 script:
- - cabal install --only-dependencies --enable-tests
- - cabal configure -v2
+ - cabal install --only-dependencies
+ - cabal install QuickCheck >= 2.5 && <= 3
+ - cabal configure -v2 --enable-tests
  - cabal build
  - cabal check || [ "$CABALVER" == "1.16" ]
+ - cabal test
  - cabal sdist
  - export SRC_TGZ=$(cabal info . | awk '{print $2 ".tar.gz";exit}') ;
    cd dist/;
