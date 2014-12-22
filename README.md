@@ -11,7 +11,6 @@ of a Pretty-printing Library' by John Hughes in Advanced Functional
 Programming, 1995. It can be found
 [here](http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.38.8777).
 
-
 ## Licensing
 
 This library is BSD-licensed.
@@ -19,23 +18,20 @@ This library is BSD-licensed.
 ## Building
 
 The library uses the Cabal build system, so building is simply a
-matter of running
+matter of running:
 
 ```
+cabal sandbox init
+cabal install "QuickCheck >= 2.5 && < 3"
+cabal install --only-dependencies
 cabal configure --enable-tests
 cabal build
+cabal test
 ```
 
-## Branches
-
-Usually two branches are maintained for Pretty development:
-
- * master: This branch is generally kept in a stable state and is
-   where release are pulled and made from. The reason for this is GHC
-   includes the pretty library and tracks the master branch by default
-   so we don't want experimental code being pulled into GHC at times.
-
- * next: This branch is the general development branch.
+We have to install `QuickCheck` manually as otherwise Cabal currently
+throws an error due to the cyclic dependency between `pretty` and
+`QuickCheck`.
 
 ## Get involved!
 
