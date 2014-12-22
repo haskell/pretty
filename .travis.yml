@@ -28,7 +28,7 @@ install:
 
 script:
  - cabal install --only-dependencies
- - cabal install QuickCheck >= 2.5 && <= 3
+ - cabal install "QuickCheck >= 2.5 && < 3"
  - cabal configure -v2 --enable-tests
  - cabal build
  - cabal check || [ "$CABALVER" == "1.16" ]
