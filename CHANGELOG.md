@@ -1,5 +1,10 @@
 # Pretty library change log
 
+## 1.1.1.3 -- 21st December, 2014
+
+* Remove upper bound on `deepseq` package to fix build issues with
+  latest GHC.
+
 ## 1.1.1.2 -- 18th August, 2014
 
 * Add NFData and Eq instances (by Ivan Lazar Miljenovic).
