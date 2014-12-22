@@ -7,12 +7,13 @@
 -- Copyright   :  (c) The University of Glasgow 2001
 -- License     :  BSD-style (see the file LICENSE)
 -- 
--- Maintainer  :  David Terei <dave.terei@gmail.com>
+-- Maintainer  :  David Terei <code@davidterei.com>
 -- Stability   :  stable
 -- Portability :  portable
 --
--- The default interface to the pretty-printing library. Provides a collection
--- of pretty printer combinators.
+-- Provides a collection of pretty printer combinators, a set of API's
+-- that provides a way to easily print out text in a consistent format
+-- of your choosing.
 --
 -- This module should be used as opposed to the "Text.PrettyPrint.HughesPJ"
 -- module. Both are equivalent though as this module simply re-exports the
