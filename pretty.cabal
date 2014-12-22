@@ -40,6 +40,7 @@ Test-Suite test-pretty
     hs-source-dirs: tests
                     src
     build-depends: base >= 3 && < 5,
+                   deepseq >= 1.1,
                    QuickCheck >= 2.5 && <3
     main-is: Test.hs
     other-modules:
