@@ -30,6 +30,7 @@ Library
     exposed-modules:
         Text.PrettyPrint
         Text.PrettyPrint.HughesPJ
+        Text.PrettyPrint.HughesPJClass
     build-depends: base >= 3 && < 5,
                    deepseq >= 1.1
     extensions: CPP, BangPatterns
