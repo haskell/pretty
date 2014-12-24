@@ -54,6 +54,10 @@ class Pretty a where
   pPrintList :: PrettyLevel -> [a] -> Doc
   pPrintList l = brackets . fsep . punctuate comma . map (pPrintPrec l 0)
 
+#if __GLASGOW_HASKELL__ >= 708
+  {-# MINIMAL pPrintPrec | pPrint #-}
+#endif
+
 -- | Pretty print a value with the 'prettyNormal' level.
 prettyShow :: (Pretty a) => a -> String
 prettyShow = render . pPrint
