@@ -41,6 +41,7 @@ module Text.PrettyPrint.HughesPJ (
 
         -- ** Wrapping documents in delimiters
         parens, brackets, braces, quotes, doubleQuotes,
+        maybeParens, maybeBrackets, maybeBraces, maybeQuotes, maybeDoubleQuotes,
 
         -- ** Combining documents
         empty,
@@ -385,6 +386,30 @@ parens p       = char '(' <> p <> char ')'
 brackets p     = char '[' <> p <> char ']'
 braces p       = char '{' <> p <> char '}'
 
+-- | Apply 'parens' to 'Doc' if boolean is true.
+maybeParens :: Bool -> Doc -> Doc
+maybeParens False = id
+maybeParens True = parens
+
+-- | Apply 'brackets' to 'Doc' if boolean is true.
+maybeBrackets :: Bool -> Doc -> Doc
+maybeBrackets False = id
+maybeBrackets True = brackets
+
+-- | Apply 'braces' to 'Doc' if boolean is true.
+maybeBraces :: Bool -> Doc -> Doc
+maybeBraces False = id
+maybeBraces True = braces
+
+-- | Apply 'quotes' to 'Doc' if boolean is true.
+maybeQuotes :: Bool -> Doc -> Doc
+maybeQuotes False = id
+maybeQuotes True = quotes
+
+-- | Apply 'doubleQuotes' to 'Doc' if boolean is true.
+maybeDoubleQuotes :: Bool -> Doc -> Doc
+maybeDoubleQuotes False = id
+maybeDoubleQuotes True = doubleQuotes
 
 -- ---------------------------------------------------------------------------
 -- Structural operations on GDocs

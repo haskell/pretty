@@ -65,9 +65,9 @@ appPrec :: Rational
 appPrec = 10
 
 -- | Parenthesize an value if the boolean is true.
+{-# DEPRECATED prettyParen "Please use 'maybeParens' instead" #-}
 prettyParen :: Bool -> Doc -> Doc
-maybeParens False = id
-maybeParens True = parens
+prettyParen = maybeParens
 
 -- Various Pretty instances
 instance Pretty Int where pPrint = int
