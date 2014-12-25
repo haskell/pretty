@@ -1,5 +1,12 @@
 # Pretty library change log
 
+## 1.1.2.0 -- 25th December, 2014
+
+* Merge in prettyclass package -- new Text.PrettyPrint.HughesPHClass.
+* Add in 'maybe\*' variants of various bracket functins.
+* Add Generic instances for appropriate data types.
+* Fix compilation under GHC 7.10
+
 ## 1.1.1.3 -- 21st December, 2014
 
 * Remove upper bound on `deepseq` package to fix build issues with
