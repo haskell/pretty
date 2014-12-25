@@ -1,4 +1,8 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE BangPatterns #-}
+#if __GLASGOW_HASKELL__ >= 701
+{-# LANGUAGE DeriveGeneric #-}
+#endif
 
 #define TESTING
 

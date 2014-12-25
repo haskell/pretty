@@ -32,8 +32,9 @@ Library
         Text.PrettyPrint.HughesPJ
         Text.PrettyPrint.HughesPJClass
     build-depends: base >= 3 && < 5,
-                   deepseq >= 1.1
-    extensions: CPP, BangPatterns
+                   deepseq >= 1.1,
+                   ghc-prim
+    extensions: CPP, BangPatterns, DeriveGeneric
     ghc-options: -Wall -fwarn-tabs
 
 Test-Suite test-pretty
@@ -42,12 +43,13 @@ Test-Suite test-pretty
                     src
     build-depends: base >= 3 && < 5,
                    deepseq >= 1.1,
+                   ghc-prim,
                    QuickCheck >= 2.5 && <3
     main-is: Test.hs
     other-modules:
         TestGenerators
         TestStructures
-    extensions: CPP, BangPatterns
+    extensions: CPP, BangPatterns, DeriveGeneric
     include-dirs: src/Text/PrettyPrint
 
 -- Executable Bench1

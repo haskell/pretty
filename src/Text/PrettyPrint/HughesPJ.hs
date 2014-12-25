@@ -2,6 +2,7 @@
 {-# LANGUAGE BangPatterns #-}
 #if __GLASGOW_HASKELL__ >= 701
 {-# LANGUAGE Safe #-}
+{-# LANGUAGE DeriveGeneric #-}
 #endif
 
 -----------------------------------------------------------------------------
@@ -80,6 +81,8 @@ import Control.DeepSeq ( NFData(rnf) )
 import Data.Function   ( on )
 import Data.Monoid     ( Monoid(mempty, mappend) )
 import Data.String     ( IsString(fromString) )
+
+import GHC.Generics
 
 -- ---------------------------------------------------------------------------
 -- The Doc calculus
@@ -178,6 +181,9 @@ data Doc
   | NoDoc                                            -- The empty set of documents
   | Beside Doc Bool Doc                              -- True <=> space between
   | Above Doc Bool Doc                               -- True <=> never overlap
+#if __GLASGOW_HASKELL__ >= 701
+  deriving (Generic)
+#endif
 
 {-
 Here are the invariants:
@@ -225,6 +231,9 @@ data TextDetails = Chr  {-# UNPACK #-} !Char -- ^ A single Char fragment
                  | PStr String -- ^ Used to represent a Fast String fragment
                                --   but now deprecated and identical to the
                                --   Str constructor.
+#if __GLASGOW_HASKELL__ >= 701
+                 deriving (Show, Eq, Generic)
+#endif
 
 -- Combining @Doc@ values
 instance Monoid Doc where
@@ -833,6 +842,9 @@ data Style
           , lineLength     :: Int   -- ^ Length of line, in chars
           , ribbonsPerLine :: Float -- ^ Ratio of line length to ribbon length
           }
+#if __GLASGOW_HASKELL__ >= 701
+  deriving (Show, Eq, Generic)
+#endif
 
 -- | The default style (@mode=PageMode, lineLength=100, ribbonsPerLine=1.5@).
 style :: Style
@@ -843,6 +855,9 @@ data Mode = PageMode     -- ^ Normal
           | ZigZagMode   -- ^ With zig-zag cuts
           | LeftMode     -- ^ No indentation, infinitely long lines
           | OneLineMode  -- ^ All on one line
+#if __GLASGOW_HASKELL__ >= 701
+          deriving (Show, Eq, Generic)
+#endif
 
 -- | Render the @Doc@ to a String using the default @Style@.
 render :: Doc -> String
