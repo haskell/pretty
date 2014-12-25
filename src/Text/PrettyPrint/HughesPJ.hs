@@ -369,9 +369,9 @@ rbrack = char ']'
 lbrace = char '{'
 rbrace = char '}'
 
-space_text, nl_text :: TextDetails
-space_text = Chr ' '
-nl_text    = Chr '\n'
+spaceText, nlText :: TextDetails
+spaceText = Chr ' '
+nlText    = Chr '\n'
 
 int      :: Int      -> Doc -- ^ @int n = text (show n)@
 integer  :: Integer  -> Doc -- ^ @integer n = text (show n)@
@@ -500,17 +500,17 @@ reduceAB (Beside Empty _ q) = q
 reduceAB doc                = doc
 
 nilAbove_ :: RDoc -> RDoc
-nilAbove_ p = NilAbove p
+nilAbove_ = NilAbove
 
 -- Arg of a TextBeside is always an RDoc
 textBeside_ :: TextDetails -> Int -> RDoc -> RDoc
-textBeside_ s sl p = TextBeside s sl p
+textBeside_ = TextBeside
 
 nest_ :: Int -> RDoc -> RDoc
-nest_ k p = Nest k p
+nest_ = Nest
 
 union_ :: RDoc -> RDoc -> RDoc
-union_ p q = Union p q
+union_ = Union
 
 
 -- ---------------------------------------------------------------------------
@@ -550,7 +550,7 @@ above_ p g q     = Above p g q
 
 above :: Doc -> Bool -> RDoc -> RDoc
 above (Above p g1 q1)  g2 q2 = above p g1 (above q1 g2 q2)
-above p@(Beside _ _ _) g  q  = aboveNest (reduceDoc p) g 0 (reduceDoc q)
+above p@(Beside{})     g  q  = aboveNest (reduceDoc p) g 0 (reduceDoc q)
 above p g q                  = aboveNest p             g 0 (reduceDoc q)
 
 -- Specfication: aboveNest p g k q = p $g$ (nest k q)
@@ -618,7 +618,7 @@ beside (Nest k p)          g q   = nest_ k $! beside p g q
 beside p@(Beside p1 g1 q1) g2 q2
          | g1 == g2              = beside p1 g1 $! beside q1 g2 q2
          | otherwise             = beside (reduceDoc p) g2 q2
-beside p@(Above _ _ _)     g q   = let !d = reduceDoc p in beside d g q
+beside p@(Above{})         g q   = let !d = reduceDoc p in beside d g q
 beside (NilAbove p)        g q   = nilAbove_ $! beside p g q
 beside (TextBeside s sl p) g q   = textBeside_ s sl $! rest
                                where
@@ -631,7 +631,7 @@ beside (TextBeside s sl p) g q   = textBeside_ s sl $! rest
 nilBeside :: Bool -> RDoc -> RDoc
 nilBeside _ Empty         = Empty -- Hence the text "" in the spec
 nilBeside g (Nest _ p)    = nilBeside g p
-nilBeside g p | g         = textBeside_ space_text 1 p
+nilBeside g p | g         = textBeside_ spaceText 1 p
               | otherwise = p
 
 
@@ -762,8 +762,7 @@ best :: Int   -- Line length
      -> Int   -- Ribbon length
      -> RDoc
      -> RDoc  -- No unions in here!
-best w0 r p0
-  = get w0 p0
+best w0 r = get w0
   where
     get w _ | w == 0 && False = undefined
     get _ Empty               = Empty
@@ -787,7 +786,7 @@ best w0 r p0
     get1 _ _  (Beside {})         = error "best get1 Beside"
 
 nicest :: Int -> Int -> Doc -> Doc -> Doc
-nicest !w !r p q = nicest1 w r 0 p q
+nicest !w !r = nicest1 w r 0
 
 nicest1 :: Int -> Int -> Int -> Doc -> Doc -> Doc
 nicest1 !w !r !sl p q | fits ((w `min` r) - sl) p = p
@@ -861,13 +860,13 @@ data Mode = PageMode     -- ^ Normal
 
 -- | Render the @Doc@ to a String using the default @Style@.
 render :: Doc -> String
-render doc = fullRender (mode style) (lineLength style) (ribbonsPerLine style)
-                        txtPrinter "" doc
+render = fullRender (mode style) (lineLength style) (ribbonsPerLine style)
+                    txtPrinter ""
 
 -- | Render the @Doc@ to a String using the given @Style@.
 renderStyle :: Style -> Doc -> String
-renderStyle s doc = fullRender (mode s) (lineLength s) (ribbonsPerLine s)
-                    txtPrinter "" doc
+renderStyle s = fullRender (mode s) (lineLength s) (ribbonsPerLine s)
+                txtPrinter ""
 
 -- | Default TextDetails printer
 txtPrinter :: TextDetails -> String -> String
@@ -884,9 +883,9 @@ fullRender :: Mode                     -- ^ Rendering mode
            -> Doc                      -- ^ The document
            -> a                        -- ^ Result
 fullRender OneLineMode _ _ txt end doc
-  = easy_display space_text (\_ y -> y) txt end (reduceDoc doc)
+  = easyDisplay spaceText (\_ y -> y) txt end (reduceDoc doc)
 fullRender LeftMode    _ _ txt end doc
-  = easy_display nl_text first txt end (reduceDoc doc)
+  = easyDisplay nlText first txt end (reduceDoc doc)
 
 fullRender m lineLen ribbons txt rest doc
   = display m lineLen ribbonLen txt rest doc'
@@ -899,23 +898,23 @@ fullRender m lineLen ribbons txt rest doc
                       ZigZagMode -> maxBound
                       _          -> lineLen
 
-easy_display :: TextDetails
+easyDisplay :: TextDetails
              -> (Doc -> Doc -> Doc)
              -> (TextDetails -> a -> a)
              -> a
              -> Doc
              -> a
-easy_display nl_space_text choose txt end doc
-  = lay doc
+easyDisplay nlSpaceText choose txt end
+  = lay
   where
-    lay NoDoc              = error "easy_display: NoDoc"
+    lay NoDoc              = error "easyDisplay: NoDoc"
     lay (Union p q)        = lay (choose p q)
     lay (Nest _ p)         = lay p
     lay Empty              = end
-    lay (NilAbove p)       = nl_space_text `txt` lay p
+    lay (NilAbove p)       = nlSpaceText `txt` lay p
     lay (TextBeside s _ p) = s `txt` lay p
-    lay (Above {})         = error "easy_display Above"
-    lay (Beside {})        = error "easy_display Beside"
+    lay (Above {})         = error "easyDisplay Above"
+    lay (Beside {})        = error "easyDisplay Beside"
 
 display :: Mode -> Int -> Int -> (TextDetails -> a -> a) -> a -> Doc -> a
 display m !page_width !ribbon_width txt end doc
@@ -925,19 +924,19 @@ display m !page_width !ribbon_width txt end doc
         lay k _            | k `seq` False = undefined
         lay k (Nest k1 p)  = lay (k + k1) p
         lay _ Empty        = end
-        lay k (NilAbove p) = nl_text `txt` lay k p
+        lay k (NilAbove p) = nlText `txt` lay k p
         lay k (TextBeside s sl p)
             = case m of
                     ZigZagMode |  k >= gap_width
-                               -> nl_text `txt` (
+                               -> nlText `txt` (
                                   Str (replicate shift '/') `txt` (
-                                  nl_text `txt`
+                                  nlText `txt`
                                   lay1 (k - shift) s sl p ))
 
                                |  k < 0
-                               -> nl_text `txt` (
+                               -> nlText `txt` (
                                   Str (replicate shift '\\') `txt` (
-                                  nl_text `txt`
+                                  nlText `txt`
                                   lay1 (k + shift) s sl p ))
 
                     _ -> lay1 k s sl p
@@ -950,7 +949,7 @@ display m !page_width !ribbon_width txt end doc
                              in Str (indent k) `txt` (s `txt` lay2 r p)
 
         lay2 k _ | k `seq` False   = undefined
-        lay2 k (NilAbove p)        = nl_text `txt` lay k p
+        lay2 k (NilAbove p)        = nlText `txt` lay k p
         lay2 k (TextBeside s sl p) = s `txt` lay2 (k + sl) p
         lay2 k (Nest _ p)          = lay2 k p
         lay2 _ Empty               = end
