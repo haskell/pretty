@@ -79,7 +79,9 @@ module Text.PrettyPrint.HughesPJ (
 
 import Control.DeepSeq ( NFData(rnf) )
 import Data.Function   ( on )
-import Data.Monoid     ( Monoid(mempty, mappend) )
+#if __GLASGOW_HASKELL__ < 709
+import Data.Monoid     ( Monoid(mempty, mappend)  )
+#endif
 import Data.String     ( IsString(fromString) )
 
 import GHC.Generics
