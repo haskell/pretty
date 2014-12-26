@@ -15,12 +15,17 @@
 -- Stability   :  stable
 -- Portability :  portable
 --
--- John Hughes's and Simon Peyton Jones's Pretty Printer Combinators
+-- Provides a collection of pretty printer combinators, a set of API's
+-- that provides a way to easily print out text in a consistent format
+-- of your choosing.
 --
--- Based on /The Design of a Pretty-printing Library/
--- in Advanced Functional Programming,
--- Johan Jeuring and Erik Meijer (eds), LNCS 925
--- <http://www.cs.chalmers.se/~rjmh/Papers/pretty.ps>
+-- Originally designed by John Hughes's and Simon Peyton Jones's.
+--
+-- For more information you can refer to the
+-- <http://belle.sourceforge.net/doc/hughes95design.pdf original paper> that
+-- serves as the basis for this libraries design:
+-- /The Design -- of a Pretty-printing Library/ by John Hughes, in Advanced
+-- Functional Programming, 1995
 --
 -----------------------------------------------------------------------------
 
@@ -58,7 +63,6 @@ module Text.PrettyPrint.HughesPJ (
 
         -- * Utility functions for documents
         first, reduceDoc,
-        -- TODO: Should these be exported? Previously they weren't
 
         -- * Rendering documents
 
