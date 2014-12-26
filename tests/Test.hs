@@ -134,11 +134,6 @@ visibleSpace ' ' = '.'
 visibleSpace '.' = error "dot in visibleSpace (avoid confusion, please)"
 visibleSpace  c  = c
 
--- shorthands debug functions
-pd = (print.prettyDoc)
-pds = mapM_ pd
-rds = (map mergeTexts.flattenDoc)
-
 
 -- (1) QuickCheck Properties: Laws
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
