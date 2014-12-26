@@ -57,11 +57,8 @@ Test-Suite test-pretty
 
 -- Executable Bench1
 --     main-is: Bench1.hs
---     hs-source-dirs: test
---                     src
---     other-modules:
---         Text.PrettyPrint
---         Text.PrettyPrint.HughesPJ
---     extensions: CPP, BangPatterns
+--     build-depends: base >= 3 && < 5,
+--                    pretty
+--     hs-source-dirs: tests
 --     ghc-options: -O -fwarn-tabs
 
