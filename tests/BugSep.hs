@@ -1,3 +1,6 @@
+-- | Demonstration of ambiguity in HughesPJ library at this time. GHC's
+-- internal copy has a different answer than we currently do, preventing them
+-- using our library.
 module Main (main) where
 
 import Text.PrettyPrint.HughesPJ

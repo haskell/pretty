@@ -1,4 +1,3 @@
-{-# OPTIONS -XStandaloneDeriving -XDeriveDataTypeable -XPackageImports #-}
 -----------------------------------------------------------------------------
 -- Module      :  HughesPJQuickCheck
 -- Copyright   :  (c) 2008 Benedikt Huber
@@ -16,6 +15,9 @@ import PrettyTestVersion
 import TestGenerators
 import TestStructures
 
+import UnitPP1
+import UnitT3911
+
 import Control.Monad
 import Data.Char (isSpace)
 import Data.List (intersperse)
@@ -31,6 +33,8 @@ main = do
     check_non_prims -- hpc full coverage
     check_rendering
     check_list_def
+    testPP1
+    testT3911
 
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 -- Utility functions
