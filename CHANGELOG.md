@@ -1,5 +1,10 @@
 # Pretty library change log
 
+## 1.1.2.1 -- 25th December, 2014
+
+* Fix overly-strict issue preventing use of pretty for very large
+  docs (by Eyal Lotem).
+
 ## 1.1.2.0 -- 25th December, 2014
 
 * Merge in prettyclass package -- new Text.PrettyPrint.HughesPHClass.
