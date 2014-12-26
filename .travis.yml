@@ -32,7 +32,7 @@ script:
  - cabal configure -v2 --enable-tests
  - cabal build
  - cabal check || [ "$CABALVER" == "1.16" ]
- - cabal test
+ - cabal test --show-details=streaming
  - cabal sdist
  - export SRC_TGZ=$(cabal info . | awk '{print $2 ".tar.gz";exit}') ;
    cd dist/;

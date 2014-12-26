@@ -33,6 +33,11 @@ We have to install `QuickCheck` manually as otherwise Cabal currently
 throws an error due to the cyclic dependency between `pretty` and
 `QuickCheck`.
 
+*If `cabal test` freezes*, then run
+`cabal test --show-details=streaming` instead. This is due to a
+[bug](https://github.com/haskell/cabal/issues/1810) in certain
+versions of Cabal.
+
 ## Get involved!
 
 We are happy to receive bug reports, fixes, documentation enhancements,
