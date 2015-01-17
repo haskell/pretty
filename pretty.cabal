@@ -47,11 +47,13 @@ Test-Suite test-pretty
                    QuickCheck >= 2.5 && <3
     main-is: Test.hs
     other-modules:
+        PrettyTestVersion
         TestGenerators
         TestStructures
+        TestUtils
+        UnitLargeDoc
         UnitPP1
         UnitT3911
-        UnitLargeDoc
     extensions: CPP, BangPatterns, DeriveGeneric
     include-dirs: src/Text/PrettyPrint
 
