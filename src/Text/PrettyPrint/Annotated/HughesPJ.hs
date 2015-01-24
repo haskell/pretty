@@ -74,6 +74,8 @@ module Text.PrettyPrint.Annotated.HughesPJ (
 
         -- ** Annotation rendering
         renderSpans, Span(..),
+        renderDecorated,
+        renderDecoratedM,
 
         -- ** Rendering with a particular style
         Style(..),
@@ -235,15 +237,15 @@ Notice the difference between
 -- | RDoc is a "reduced GDoc", guaranteed not to have a top-level Above or Beside.
 type RDoc = Doc
 
-data AnnotDetails a = AnnotStart a
+data AnnotDetails a = AnnotStart
                     | NoAnnot TextDetails {-# UNPACK #-} !Int
-                    | AnnotEnd
+                    | AnnotEnd a
                       deriving (Show,Eq)
 
 instance Functor AnnotDetails where
-  fmap f (AnnotStart a) = AnnotStart (f a)
+  fmap _ AnnotStart     = AnnotStart
   fmap _ (NoAnnot d i)  = NoAnnot d i
-  fmap _ AnnotEnd       = AnnotEnd
+  fmap f (AnnotEnd a)   = AnnotEnd (f a)
 
 -- NOTE: Annotations are assumed to have zero length; only text has a length.
 annotSize :: AnnotDetails a -> Int
@@ -300,9 +302,9 @@ instance NFData a => NFData (Doc a) where
   rnf (Above ud s ld)     = rnf ud `seq` rnf s `seq` rnf ld
 
 instance NFData a => NFData (AnnotDetails a) where
-  rnf (AnnotStart a) = rnf a
+  rnf AnnotStart     = ()
   rnf (NoAnnot d sl) = rnf d `seq` rnf sl
-  rnf AnnotEnd       = ()
+  rnf (AnnotEnd a)   = rnf a
 
 instance NFData TextDetails where
   rnf (Chr c)    = rnf c
@@ -314,9 +316,9 @@ instance NFData TextDetails where
 
 -- | Attach an annotation to a document.
 annotate :: a -> Doc a -> Doc a
-annotate a d = TextBeside (AnnotStart a)
+annotate a d = TextBeside AnnotStart
              $ beside (reduceDoc d) False
-             $ TextBeside AnnotEnd Empty
+             $ TextBeside (AnnotEnd a) Empty
 
 
 -- | A document of height and width 1, containing a literal character.
@@ -1056,7 +1058,7 @@ instance Functor Span where
 -- State required for generating document spans.
 data Spans a = Spans { sOffset :: !Int
                        -- ^ Current offset from the end of the document
-                     , sStack  :: [Int -> a -> Span a]
+                     , sStack  :: [Int -> Span a]
                        -- ^ Currently open spans
                      , sSpans  :: [Span a]
                        -- ^ Collected annotation regions
@@ -1075,7 +1077,7 @@ renderSpans  = finalize
     where
     adjust s = s { spanStart = size - spanStart s }
 
-  mkSpan end start a = Span { spanStart      = start
+  mkSpan a end start = Span { spanStart      = start
                             , spanLength     = start - end
                               -- ^ this seems wrong, but remember that it's
                               -- working backwards at this point
@@ -1083,16 +1085,74 @@ renderSpans  = finalize
 
   -- the document gets generated in reverse, which is why the starting
   -- annotation ends the annotation.
-  spanPrinter (AnnotStart a) s =
+  spanPrinter AnnotStart s =
     case sStack s of
-      sp : rest -> s { sSpans = sp (sOffset s) a : sSpans s, sStack = rest }
+      sp : rest -> s { sSpans = sp (sOffset s) : sSpans s, sStack = rest }
       _         -> error "renderSpans: stack underflow"
 
-  spanPrinter AnnotEnd s =
-    s { sStack = mkSpan (sOffset s) : sStack s }
+  spanPrinter (AnnotEnd a) s =
+    s { sStack = mkSpan a (sOffset s) : sStack s }
 
   spanPrinter (NoAnnot td l) s =
     case td of
       Chr  c -> s { sOutput = c  : sOutput s, sOffset = sOffset s + l }
       Str  t -> s { sOutput = t ++ sOutput s, sOffset = sOffset s + l }
       PStr t -> s { sOutput = t ++ sOutput s, sOffset = sOffset s + l }
+
+
+-- | Render out a String, interpreting the annotations as part of the resulting
+-- document.
+--
+-- IMPORTANT: the size of the annotation string does NOT figure into the layout
+-- of the document, so the document will lay out as though the annotations are
+-- not present.
+renderDecorated :: (ann -> String) -- ^ Starting an annotation
+                -> (ann -> String) -- ^ Ending an annotation
+                -> Doc ann -> String
+renderDecorated startAnn endAnn =
+  finalize . fullRenderAnn (mode style) (lineLength style) (ribbonsPerLine style)
+                 annPrinter
+                 ("", [])
+  where
+  annPrinter AnnotStart (rest,stack) =
+    case stack of
+      a : as -> (startAnn a ++ rest, as)
+      _      -> error "renderDecorated: stack underflow"
+
+  annPrinter (AnnotEnd a) (rest,stack) =
+    (endAnn a ++ rest, a : stack)
+
+  annPrinter (NoAnnot s _) (rest,stack) =
+    (txtPrinter s rest, stack)
+
+  finalize (str,_) = str
+
+
+-- | Render a document with annotations, by interpreting the start and end of
+-- the annotations, as well as the text details in the context of a monad.
+renderDecoratedM :: Monad m
+                 => (ann    -> m r) -- ^ Starting an annotation
+                 -> (ann    -> m r) -- ^ Ending an annotation
+                 -> (String -> m r) -- ^ Text formatting
+                 -> m r             -- ^ Document end
+                 -> Doc ann -> m r
+renderDecoratedM startAnn endAnn txt docEnd =
+  finalize . fullRenderAnn (mode style) (lineLength style) (ribbonsPerLine style)
+                 annPrinter
+                 (docEnd, [])
+  where
+  annPrinter AnnotStart (rest,stack) =
+    case stack of
+      a : as -> (startAnn a >> rest, as)
+      _      -> error "renderDecorated: stack underflow"
+
+  annPrinter (AnnotEnd a) (rest,stack) =
+    (endAnn a >> rest, a : stack)
+
+  annPrinter (NoAnnot td _) (rest,stack) =
+    case td of
+      Chr  c -> (txt [c] >> rest, stack)
+      Str  s -> (txt s   >> rest, stack)
+      PStr s -> (txt s   >> rest, stack)
+
+  finalize (m,_) = m
