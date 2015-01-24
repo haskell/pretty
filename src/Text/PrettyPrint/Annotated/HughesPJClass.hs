@@ -4,7 +4,7 @@
 
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Text.PrettyPrint.HughesPJClass
+-- Module      :  Text.PrettyPrint.Annotated.HughesPJClass
 -- Copyright   :  (c) Lennart Augustsson 2014
 -- License     :  BSD-style (see the file LICENSE)
 --
@@ -19,7 +19,7 @@
 --
 -----------------------------------------------------------------------------
 
-module Text.PrettyPrint.HughesPJClass (
+module Text.PrettyPrint.Annotated.HughesPJClass (
     -- * Pretty typeclass
     Pretty(..),
 
@@ -27,10 +27,10 @@ module Text.PrettyPrint.HughesPJClass (
     prettyShow, prettyParen,
 
     -- re-export HughesPJ
-    module Text.PrettyPrint.HughesPJ
+    module Text.PrettyPrint.Annotated.HughesPJ
   ) where
 
-import Text.PrettyPrint.HughesPJ
+import Text.PrettyPrint.Annotated.HughesPJ
 
 -- | Level of detail in the pretty printed output.
 -- Level 0 is the least detail.
@@ -45,13 +45,13 @@ prettyNormal = PrettyLevel 0
 -- the 'Show' class. Minimal complete definition is either 'pPrintPrec' or
 -- 'pPrint'.
 class Pretty a where
-  pPrintPrec :: PrettyLevel -> Rational -> a -> Doc
+  pPrintPrec :: PrettyLevel -> Rational -> a -> Doc ann
   pPrintPrec _ _ = pPrint
 
-  pPrint :: a -> Doc
+  pPrint :: a -> Doc ann
   pPrint = pPrintPrec prettyNormal 0
 
-  pPrintList :: PrettyLevel -> [a] -> Doc
+  pPrintList :: PrettyLevel -> [a] -> Doc ann
   pPrintList l = brackets . fsep . punctuate comma . map (pPrintPrec l 0)
 
 #if __GLASGOW_HASKELL__ >= 708
@@ -62,7 +62,7 @@ class Pretty a where
 prettyShow :: (Pretty a) => a -> String
 prettyShow = render . pPrint
 
-pPrint0 :: (Pretty a) => PrettyLevel -> a -> Doc
+pPrint0 :: (Pretty a) => PrettyLevel -> a -> Doc ann
 pPrint0 l = pPrintPrec l 0
 
 appPrec :: Rational
@@ -70,7 +70,7 @@ appPrec = 10
 
 -- | Parenthesize an value if the boolean is true.
 {-# DEPRECATED prettyParen "Please use 'maybeParens' instead" #-}
-prettyParen :: Bool -> Doc -> Doc
+prettyParen :: Bool -> Doc ann -> Doc ann
 prettyParen = maybeParens
 
 -- Various Pretty instances
