@@ -58,7 +58,7 @@ Test-Suite test-pretty
         UnitPP1
         UnitT3911
     extensions: CPP, BangPatterns, DeriveGeneric
-    include-dirs: src/Text/PrettyPrint
+    include-dirs: src/Text/PrettyPrint/Annotated
 
 -- Executable Bench1
 --     main-is: Bench1.hs

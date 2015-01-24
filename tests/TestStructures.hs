@@ -9,7 +9,7 @@ module TestStructures (
         CDoc(..), CList(..), CDocList(..), Text(..),
 
         buildDoc, liftDoc2, liftDoc3, buildDocList,
-        text', tdToStr, genericCProp
+        text', annotToTd, tdToStr, genericCProp
     ) where
 
 import PrettyTestVersion
@@ -44,7 +44,7 @@ instance Show CList where
 
 instance Show CDocList where show = show . unDocList
  
-buildDoc :: CDoc -> Doc
+buildDoc :: CDoc -> Doc ()
 buildDoc CEmpty = empty
 buildDoc (CText s) = text s
 buildDoc (CList sp ds) = (listComb sp) $ map buildDoc ds
@@ -52,20 +52,24 @@ buildDoc (CBeside sep d1 d2) = (if sep then (<+>) else (<>)) (buildDoc d1) (buil
 buildDoc (CAbove noOvlap d1 d2) = (if noOvlap then ($+$) else ($$)) (buildDoc d1) (buildDoc d2) 
 buildDoc (CNest k d) = nest k $ buildDoc d
 
-listComb :: CList -> ([Doc] -> Doc)
+listComb :: CList -> ([Doc ()] -> Doc ())
 listComb cs = case cs of CCat -> cat ;  CSep -> sep ; CFCat -> fcat  ; CFSep -> fsep
 
-liftDoc2 :: (Doc -> Doc -> a) -> (CDoc -> CDoc -> a)
+liftDoc2 :: (Doc () -> Doc () -> a) -> (CDoc -> CDoc -> a)
 liftDoc2 f cd1 cd2 = f (buildDoc cd1) (buildDoc cd2)
 
-liftDoc3 :: (Doc -> Doc -> Doc -> a) -> (CDoc -> CDoc -> CDoc -> a)
+liftDoc3 :: (Doc () -> Doc () -> Doc () -> a) -> (CDoc -> CDoc -> CDoc -> a)
 liftDoc3 f cd1 cd2 cd3 = f (buildDoc cd1) (buildDoc cd2) (buildDoc cd3)
     
-buildDocList :: CDocList -> [Doc]
+buildDocList :: CDocList -> [Doc ()]
 buildDocList = map buildDoc . unDocList
 
-text' :: Text -> Doc
+text' :: Text -> Doc ()
 text' (Text str) = text str
+
+annotToTd :: AnnotDetails a -> TextDetails
+annotToTd (NoAnnot s _) = s
+annotToTd _             = Str ""
 
 -- convert text details to string
 tdToStr :: TextDetails -> String
