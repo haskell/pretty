@@ -21,7 +21,7 @@
 --
 -----------------------------------------------------------------------------
 
-module Text.PrettyPrintAnnotated ( 
+module Text.PrettyPrint.Annotated ( 
 
         -- * The document type
         Doc,
