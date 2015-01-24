@@ -45,13 +45,13 @@ prettyNormal = PrettyLevel 0
 -- the 'Show' class. Minimal complete definition is either 'pPrintPrec' or
 -- 'pPrint'.
 class Pretty a where
-  pPrintPrec :: PrettyLevel -> Rational -> a -> Doc
+  pPrintPrec :: PrettyLevel -> Rational -> a -> Doc ann
   pPrintPrec _ _ = pPrint
 
-  pPrint :: a -> Doc
+  pPrint :: a -> Doc ann
   pPrint = pPrintPrec prettyNormal 0
 
-  pPrintList :: PrettyLevel -> [a] -> Doc
+  pPrintList :: PrettyLevel -> [a] -> Doc ann
   pPrintList l = brackets . fsep . punctuate comma . map (pPrintPrec l 0)
 
 #if __GLASGOW_HASKELL__ >= 708
@@ -62,7 +62,7 @@ class Pretty a where
 prettyShow :: (Pretty a) => a -> String
 prettyShow = render . pPrint
 
-pPrint0 :: (Pretty a) => PrettyLevel -> a -> Doc
+pPrint0 :: (Pretty a) => PrettyLevel -> a -> Doc ann
 pPrint0 l = pPrintPrec l 0
 
 appPrec :: Rational
@@ -70,7 +70,7 @@ appPrec = 10
 
 -- | Parenthesize an value if the boolean is true.
 {-# DEPRECATED prettyParen "Please use 'maybeParens' instead" #-}
-prettyParen :: Bool -> Doc -> Doc
+prettyParen :: Bool -> Doc ann -> Doc ann
 prettyParen = maybeParens
 
 -- Various Pretty instances
