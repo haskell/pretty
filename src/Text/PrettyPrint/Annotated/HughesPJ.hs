@@ -238,7 +238,7 @@ Notice the difference between
 type RDoc = Doc
 
 data AnnotDetails a = AnnotStart
-                    | NoAnnot TextDetails {-# UNPACK #-} !Int
+                    | NoAnnot !TextDetails {-# UNPACK #-} !Int
                     | AnnotEnd a
                       deriving (Show,Eq)
 
