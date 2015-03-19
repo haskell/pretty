@@ -8,24 +8,16 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Text.PrettyPrint.Annotated.HughesPJ
--- Copyright   :  (c) The University of Glasgow 2001
+-- Copyright   :  (c) Trevor Elliott <revor@galois.com> 2015
 -- License     :  BSD-style (see the file LICENSE)
 --
 -- Maintainer  :  David Terei <code@davidterei.com>
 -- Stability   :  stable
 -- Portability :  portable
 --
--- Provides a collection of pretty printer combinators, a set of API's
--- that provides a way to easily print out text in a consistent format
--- of your choosing.
---
--- Originally designed by John Hughes's and Simon Peyton Jones's.
---
--- For more information you can refer to the
--- <http://belle.sourceforge.net/doc/hughes95design.pdf original paper> that
--- serves as the basis for this libraries design:
--- /The Design -- of a Pretty-printing Library/ by John Hughes, in Advanced
--- Functional Programming, 1995
+-- This module provides a version of pretty that allows for annotations to be
+-- attached to documents. Annotations are arbitrary pieces of metadata that can
+-- be attached to sub-documents.
 --
 -----------------------------------------------------------------------------
 

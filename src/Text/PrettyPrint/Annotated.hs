@@ -4,20 +4,20 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Text.PrettyPrint.Annotated
--- Copyright   :  (c) The University of Glasgow 2001
+-- Copyright   :  (c) Trevor Elliott <revor@galois.com> 2015
 -- License     :  BSD-style (see the file LICENSE)
 -- 
 -- Maintainer  :  David Terei <code@davidterei.com>
 -- Stability   :  stable
 -- Portability :  portable
 --
--- Provides a collection of pretty printer combinators, a set of API's
--- that provides a way to easily print out text in a consistent format
--- of your choosing.
+-- This module provides a version of pretty that allows for annotations to be
+-- attached to documents. Annotations are arbitrary pieces of metadata that can
+-- be attached to sub-documents.
 --
--- This module should be used as opposed to the "Text.PrettyPrint.HughesPJ"
--- module. Both are equivalent though as this module simply re-exports the
--- other.
+-- This module should be used as opposed to the
+-- 'Text.PrettyPrint.Annotated.HughesPJ' module. Both are equivalent though as
+-- this module simply re-exports the other.
 --
 -----------------------------------------------------------------------------
 

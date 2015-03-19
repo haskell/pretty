@@ -5,17 +5,18 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Text.PrettyPrint.Annotated.HughesPJClass
--- Copyright   :  (c) Lennart Augustsson 2014
+-- Copyright   :  (c) Trevor Elliott <revor@galois.com> 2015
 -- License     :  BSD-style (see the file LICENSE)
 --
 -- Maintainer  :  David Terei <code@davidterei.com>
 -- Stability   :  stable
 -- Portability :  portable
 --
--- Pretty printing class, simlar to 'Show' but nicer looking. 
+-- Pretty printing class, simlar to 'Show' but nicer looking.
 --
 -- Note that the precedence level is a 'Rational' so there is an unlimited
--- number of levels. This module re-exports 'Text.PrettyPrint.HughesPJ'.
+-- number of levels. This module re-exports
+-- 'Text.PrettyPrint.Annotated.HughesPJ'.
 --
 -----------------------------------------------------------------------------
 
