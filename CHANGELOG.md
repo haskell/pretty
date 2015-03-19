@@ -1,5 +1,14 @@
 # Pretty library change log
 
+## 1.1.3.2 -- 19th March, 2015
+
+* Fix bug with haddock documentation.
+* Clean up module intro documentation.
+
+## 1.1.3.1 -- 11th March, 2015
+
+* Add support for annotations in pretty (by Trevor Elliott).
+
 ## 1.1.2.1 -- 25th December, 2014
 
 * Fix overly-strict issue preventing use of pretty for very large
