@@ -1079,7 +1079,7 @@ renderSpans  = finalize
 
   mkSpan a end start = Span { spanStart      = start
                             , spanLength     = start - end
-                              -- ^ this seems wrong, but remember that it's
+                              -- this seems wrong, but remember that it's
                               -- working backwards at this point
                             , spanAnnotation = a }
 

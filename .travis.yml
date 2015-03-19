@@ -34,6 +34,7 @@ script:
  - cabal check
  - ([ "$CABALVER" == "1.20" ] && cabal test --show-details=streaming) || ([ "$CABALVER" != "1.20" ] && cabal test)
  - cabal sdist
+ - cabal haddock
  - export SRC_TGZ=$(cabal info . | awk '{print $2 ".tar.gz";exit}') ;
    cd dist/;
    if [ -f "$SRC_TGZ" ]; then
