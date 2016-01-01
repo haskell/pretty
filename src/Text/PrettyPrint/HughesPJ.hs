@@ -87,7 +87,9 @@ import qualified Text.PrettyPrint.Annotated.HughesPJ as Ann
 
 import Control.DeepSeq ( NFData(rnf) )
 import Data.Function   ( on )
-#if __GLASGOW_HASKELL__ < 709
+#if __GLASGOW_HASKELL__ >= 800
+import qualified Data.Semigroup as Semi ( Semigroup((<>)) )
+#elif __GLASGOW_HASKELL__ < 709
 import Data.Monoid     ( Monoid(mempty, mappend)  )
 #endif
 import Data.String     ( IsString(fromString) )
@@ -127,9 +129,18 @@ liftBinary f (Doc a) (Doc b) = Doc (f a b)
 type RDoc = Doc
 
 -- Combining @Doc@ values
+#if __GLASGOW_HASKELL__ >= 800
+instance Semi.Semigroup Doc where
+    (<>) = (Text.PrettyPrint.HughesPJ.<>)
+
+instance Monoid Doc where
+    mempty  = empty
+    mappend = (Semi.<>)
+#else
 instance Monoid Doc where
     mempty  = empty
     mappend = (<>)
+#endif
 
 instance IsString Doc where
     fromString = text

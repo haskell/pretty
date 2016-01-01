@@ -84,7 +84,9 @@ module Text.PrettyPrint.Annotated.HughesPJ (
 
 import Control.DeepSeq ( NFData(rnf) )
 import Data.Function   ( on )
-#if __GLASGOW_HASKELL__ < 709
+#if __GLASGOW_HASKELL__ >= 800
+import qualified Data.Semigroup as Semi ( Semigroup((<>)) )
+#elif __GLASGOW_HASKELL__ < 709
 import Data.Monoid     ( Monoid(mempty, mappend)  )
 #endif
 import Data.String     ( IsString(fromString) )
@@ -258,9 +260,18 @@ data TextDetails = Chr  {-# UNPACK #-} !Char -- ^ A single Char fragment
 #endif
 
 -- Combining @Doc@ values
+#if __GLASGOW_HASKELL__ >= 800
+instance Semi.Semigroup (Doc a) where
+    (<>) = (Text.PrettyPrint.Annotated.HughesPJ.<>)
+
+instance Monoid (Doc a) where
+    mempty  = empty
+    mappend = (Semi.<>)
+#else
 instance Monoid (Doc a) where
     mempty  = empty
     mappend = (<>)
+#endif
 
 instance IsString (Doc a) where
     fromString = text
