@@ -2,7 +2,7 @@
 
 [![Hackage](https://img.shields.io/hackage/v/pretty.svg?style=flat)](https://hackage.haskell.org/package/pretty)
 [![Hackage Dependencies](https://img.shields.io/hackage-deps/v/pretty.svg?style=flat)](http://packdeps.haskellers.com/reverse/pretty)
-[![BSD3 License](http://img.shields.io/badge/license-MIT-brightgreen.svg)][tl;dr Legal: BSD3]
+[![BSD3 License](http://img.shields.io/badge/license-BSD3-brightgreen.svg?style=flat)][tl;dr Legal: BSD3]
 [![Build](https://img.shields.io/travis/haskell/pretty.svg?style=flat)](https://travis-ci.org/haskell/pretty)
 
 [tl;dr Legal: BSD3]:
