@@ -4,3 +4,4 @@ dist-install
 ghc.mk
 cabal.sandbox.config
 .cabal-sandbox
+.stack-work
