@@ -1,5 +1,5 @@
 name:          pretty
-version:       1.1.3.2
+version:       1.1.3.3
 synopsis:      Pretty-printing library
 description:
         This package contains a pretty-printing library, a set of API's
@@ -20,6 +20,11 @@ stability:     Stable
 build-type:    Simple
 Extra-Source-Files: README.md CHANGELOG.md
 Cabal-Version: >= 1.8
+
+source-repository this
+    type: git
+    location: http://github.com/haskell/pretty.git
+    tag: 1.1.3.3
 
 source-repository head
     type:     git
@@ -59,11 +64,4 @@ Test-Suite test-pretty
         UnitT3911
     extensions: CPP, BangPatterns, DeriveGeneric
     include-dirs: src/Text/PrettyPrint/Annotated
-
--- Executable Bench1
---     main-is: Bench1.hs
---     build-depends: base >= 3 && < 5,
---                    pretty
---     hs-source-dirs: tests
---     ghc-options: -O -fwarn-tabs
 

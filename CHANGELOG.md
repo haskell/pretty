@@ -1,5 +1,9 @@
 # Pretty library change log
 
+## 1.1.3.3 -- 29th February, 2016
+
+* Improve documentation.
+
 ## 1.1.3.2 -- 19th March, 2015
 
 * Fix bug with haddock documentation.
