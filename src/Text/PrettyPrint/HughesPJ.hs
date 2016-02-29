@@ -1,5 +1,4 @@
 {-# OPTIONS_HADDOCK not-home #-}
-{-# LANGUAGE BangPatterns #-}
 #if __GLASGOW_HASKELL__ >= 701
 {-# LANGUAGE Safe #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -15,17 +14,17 @@
 -- Stability   :  stable
 -- Portability :  portable
 --
--- Provides a collection of pretty printer combinators, a set of API's
--- that provides a way to easily print out text in a consistent format
--- of your choosing.
+-- Provides a collection of pretty printer combinators, a set of API's that
+-- provides a way to easily print out text in a consistent format of your
+-- choosing.
 --
 -- Originally designed by John Hughes's and Simon Peyton Jones's.
 --
 -- For more information you can refer to the
 -- <http://belle.sourceforge.net/doc/hughes95design.pdf original paper> that
--- serves as the basis for this libraries design:
--- /The Design -- of a Pretty-printing Library/ by John Hughes, in Advanced
--- Functional Programming, 1995
+-- serves as the basis for this libraries design: /The Design -- of a
+-- Pretty-printing Library/ by John Hughes, in Advanced Functional Programming,
+-- 1995.
 --
 -----------------------------------------------------------------------------
 
@@ -107,9 +106,8 @@ infixl 5 $$, $+$
 -- ---------------------------------------------------------------------------
 -- The Doc data type
 
--- | The abstract type of documents.
--- A Doc represents a *set* of layouts. A Doc with
--- no occurrences of Union or NoDoc represents just one layout.
+-- | The abstract type of documents. A Doc represents a /set/ of layouts. A
+-- Doc with no occurrences of Union or NoDoc represents just one layout.
 newtype Doc = Doc (Ann.Doc ())
 #if __GLASGOW_HASKELL__ >= 701
                     deriving (Generic)
@@ -423,7 +421,7 @@ first  = liftBinary Ann.first
 -- ---------------------------------------------------------------------------
 -- Rendering
 
--- | Render the @Doc@ to a String using the default @Style@.
+-- | Render the @Doc@ to a String using the default @Style@ (see 'style').
 render :: Doc -> String
 render = fullRender (mode style) (lineLength style) (ribbonsPerLine style)
                     txtPrinter ""
@@ -435,20 +433,21 @@ renderStyle s = fullRender (mode s) (lineLength s) (ribbonsPerLine s)
                 txtPrinter ""
 {-# INLINE renderStyle #-}
 
--- | Default TextDetails printer
+-- | Default TextDetails printer.
 txtPrinter :: TextDetails -> String -> String
 txtPrinter (Chr c)   s  = c:s
 txtPrinter (Str s1)  s2 = s1 ++ s2
 txtPrinter (PStr s1) s2 = s1 ++ s2
 
--- | The general rendering interface.
-fullRender :: Mode                     -- ^ Rendering mode
-           -> Int                      -- ^ Line length
-           -> Float                    -- ^ Ribbons per line
-           -> (TextDetails -> a -> a)  -- ^ What to do with text
-           -> a                        -- ^ What to do at the end
-           -> Doc                      -- ^ The document
-           -> a                        -- ^ Result
+-- | The general rendering interface. Please refer to the @Style@ and @Mode@
+-- types for a description of rendering mode, line length and ribbons.
+fullRender :: Mode                     -- ^ Rendering mode.
+           -> Int                      -- ^ Line length.
+           -> Float                    -- ^ Ribbons per line.
+           -> (TextDetails -> a -> a)  -- ^ What to do with text.
+           -> a                        -- ^ What to do at the end.
+           -> Doc                      -- ^ The document.
+           -> a                        -- ^ Result.
 fullRender m lineLen ribbons txt rest (Doc doc)
   = Ann.fullRender m lineLen ribbons txt rest doc
 {-# INLINE fullRender #-}

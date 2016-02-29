@@ -33,8 +33,8 @@ module Text.PrettyPrint.Annotated.HughesPJClass (
 
 import Text.PrettyPrint.Annotated.HughesPJ
 
--- | Level of detail in the pretty printed output.
--- Level 0 is the least detail.
+-- | Level of detail in the pretty printed output. Level 0 is the least
+-- detail.
 newtype PrettyLevel = PrettyLevel Int
   deriving (Eq, Ord, Show)
 

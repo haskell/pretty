@@ -178,18 +178,17 @@ infixl 5 $$, $+$
 -- ---------------------------------------------------------------------------
 -- The Doc data type
 
--- | The abstract type of documents.
--- A Doc represents a *set* of layouts. A Doc with
--- no occurrences of Union or NoDoc represents just one layout.
+-- | The abstract type of documents. A Doc represents a /set/ of layouts. A Doc
+-- with no occurrences of Union or NoDoc represents just one layout.
 data Doc a
-  = Empty                                            -- empty
-  | NilAbove (Doc a)                                 -- text "" $$ x
-  | TextBeside !(AnnotDetails a) (Doc a)             -- text s <> x
-  | Nest {-# UNPACK #-} !Int (Doc a)                 -- nest k x
-  | Union (Doc a) (Doc a)                            -- ul `union` ur
-  | NoDoc                                            -- The empty set of documents
-  | Beside (Doc a) Bool (Doc a)                      -- True <=> space between
-  | Above (Doc a) Bool (Doc a)                       -- True <=> never overlap
+  = Empty                                            -- ^ An empty span, see 'empty'.
+  | NilAbove (Doc a)                                 -- ^ @text "" $$ x@.
+  | TextBeside !(AnnotDetails a) (Doc a)             -- ^ @text s <> x@.
+  | Nest {-# UNPACK #-} !Int (Doc a)                 -- ^ @nest k x@.
+  | Union (Doc a) (Doc a)                            -- ^ @ul `union` ur@.
+  | NoDoc                                            -- ^ The empty set of documents.
+  | Beside (Doc a) Bool (Doc a)                      -- ^ True <=> space between.
+  | Above (Doc a) Bool (Doc a)                       -- ^ True <=> never overlap.
 #if __GLASGOW_HASKELL__ >= 701
   deriving (Generic)
 #endif
@@ -197,40 +196,43 @@ data Doc a
 {-
 Here are the invariants:
 
-1) The argument of NilAbove is never Empty. Therefore
-   a NilAbove occupies at least two lines.
+1) The argument of NilAbove is never Empty. Therefore a NilAbove occupies at
+least two lines.
 
 2) The argument of @TextBeside@ is never @Nest@.
 
-3) The layouts of the two arguments of @Union@ both flatten to the same
-   string.
+3) The layouts of the two arguments of @Union@ both flatten to the same string.
 
 4) The arguments of @Union@ are either @TextBeside@, or @NilAbove@.
 
 5) A @NoDoc@ may only appear on the first line of the left argument of an
-   union. Therefore, the right argument of an union can never be equivalent
-   to the empty set (@NoDoc@).
+   union. Therefore, the right argument of an union can never be equivalent to
+   the empty set (@NoDoc@).
 
-6) An empty document is always represented by @Empty@.  It can't be
-   hidden inside a @Nest@, or a @Union@ of two @Empty@s.
+6) An empty document is always represented by @Empty@. It can't be hidden
+   inside a @Nest@, or a @Union@ of two @Empty@s.
 
-7) The first line of every layout in the left argument of @Union@ is
-   longer than the first line of any layout in the right argument.
-   (1) ensures that the left argument has a first line.  In view of
-   (3), this invariant means that the right argument must have at
-   least two lines.
+7) The first line of every layout in the left argument of @Union@ is longer
+   than the first line of any layout in the right argument. (1) ensures that
+   the left argument has a first line. In view of (3), this invariant means
+   that the right argument must have at least two lines.
 
 Notice the difference between
    * NoDoc (no documents)
    * Empty (one empty document; no height and no width)
-   * text "" (a document containing the empty string;
-              one line high, but has no width)
+   * text "" (a document containing the empty string; one line high, but has no
+              width)
 -}
 
 
 -- | RDoc is a "reduced GDoc", guaranteed not to have a top-level Above or Beside.
 type RDoc = Doc
 
+-- | An annotation (side-metadata) attached at a particular point in a @Doc@.
+-- Allows carrying non-pretty-printed data around in a @Doc@ that is attached
+-- at particular points in the structure. Once the @Doc@ is render to an output
+-- type (such as 'String'), we can also retrieve where in the rendered document
+-- our annotations start and end (see 'Span' and 'renderSpans').
 data AnnotDetails a = AnnotStart
                     | NoAnnot !TextDetails {-# UNPACK #-} !Int
                     | AnnotEnd a
@@ -246,10 +248,8 @@ annotSize :: AnnotDetails a -> Int
 annotSize (NoAnnot _ l) = l
 annotSize _             = 0
 
--- | The TextDetails data type
---
--- A TextDetails represents a fragment of text that will be
--- output at some point.
+-- | A TextDetails represents a fragment of text that will be output at some
+-- point in a @Doc@.
 data TextDetails = Chr  {-# UNPACK #-} !Char -- ^ A single Char fragment
                  | Str  String -- ^ A whole String fragment
                  | PStr String -- ^ Used to represent a Fast String fragment
@@ -572,7 +572,7 @@ eliminateEmpty cons p     g q          =
 nilAbove_ :: RDoc a -> RDoc a
 nilAbove_ = NilAbove
 
--- Arg of a TextBeside is always an RDoc
+-- | Arg of a TextBeside is always an RDoc.
 textBeside_ :: AnnotDetails a -> RDoc a -> RDoc a
 textBeside_  = TextBeside
 
@@ -829,10 +829,10 @@ elideNest d          = d
 -- ---------------------------------------------------------------------------
 -- Selecting the best layout
 
-best :: Int   -- Line length
-     -> Int   -- Ribbon length
+best :: Int   -- Line length.
+     -> Int   -- Ribbon length.
      -> RDoc a
-     -> RDoc a  -- No unions in here!
+     -> RDoc a  -- No unions in here!.
 best w0 r = get w0
   where
     get w _ | w == 0 && False = undefined
@@ -876,7 +876,8 @@ fits _ (Beside {})         = error "fits Beside"
 fits _ (Union {})          = error "fits Union"
 fits _ (Nest {})           = error "fits Nest"
 
--- | @first@ returns its first argument if it is non-empty, otherwise its second.
+-- | @first@ returns its first argument if it is non-empty, otherwise its
+-- second.
 first :: Doc a -> Doc a -> Doc a
 first p q | nonEmptySet p = p -- unused, because (get OneLineMode) is unused
           | otherwise     = q
@@ -906,11 +907,19 @@ oneLiner (Beside {})         = error "oneLiner Beside"
 -- ---------------------------------------------------------------------------
 -- Rendering
 
--- | A rendering style.
+-- | A rendering style. Allows us to specify constraints to choose among the
+-- many different rendering options.
 data Style
-  = Style { mode           :: Mode  -- ^ The rendering mode
-          , lineLength     :: Int   -- ^ Length of line, in chars
-          , ribbonsPerLine :: Float -- ^ Ratio of line length to ribbon length
+  = Style { mode           :: Mode
+            -- ^ The rendering mode.
+          , lineLength     :: Int
+            -- ^ Maximum length of a line, in characters.
+          , ribbonsPerLine :: Float
+            -- ^ Ratio of line length to ribbon length. A ribbon refers to the
+            -- characters on a line /excluding/ indentation. So a 'lineLength'
+            -- of 100, with a 'ribbonsPerLine' of @2.0@ would only allow up to
+            -- 50 characters of ribbon to be displayed on a line, while
+            -- allowing it to be indented up to 50 characters.
           }
 #if __GLASGOW_HASKELL__ >= 701
   deriving (Show, Eq, Generic)
@@ -921,15 +930,23 @@ style :: Style
 style = Style { lineLength = 100, ribbonsPerLine = 1.5, mode = PageMode }
 
 -- | Rendering mode.
-data Mode = PageMode     -- ^ Normal
-          | ZigZagMode   -- ^ With zig-zag cuts
-          | LeftMode     -- ^ No indentation, infinitely long lines
-          | OneLineMode  -- ^ All on one line
+data Mode = PageMode    
+            -- ^ Normal rendering ('lineLength' and 'ribbonsPerLine'
+            -- respected').
+          | ZigZagMode  
+            -- ^ With zig-zag cuts.
+          | LeftMode    
+            -- ^ No indentation, infinitely long lines ('lineLength' ignored),
+            -- but explicit new lines, i.e., @text "one" $$ text "two"@, are
+            -- respected.
+          | OneLineMode 
+            -- ^ All on one line, 'lineLength' ignored and explicit new lines
+            -- (@$$@) are turned into spaces.
 #if __GLASGOW_HASKELL__ >= 701
           deriving (Show, Eq, Generic)
 #endif
 
--- | Render the @Doc@ to a String using the default @Style@.
+-- | Render the @Doc@ to a String using the default @Style@ (see 'style').
 render :: Doc a -> String
 render = fullRender (mode style) (lineLength style) (ribbonsPerLine style)
                     txtPrinter ""
@@ -939,32 +956,36 @@ renderStyle :: Style -> Doc a -> String
 renderStyle s = fullRender (mode s) (lineLength s) (ribbonsPerLine s)
                 txtPrinter ""
 
--- | Default TextDetails printer
+-- | Default TextDetails printer.
 txtPrinter :: TextDetails -> String -> String
 txtPrinter (Chr c)   s  = c:s
 txtPrinter (Str s1)  s2 = s1 ++ s2
 txtPrinter (PStr s1) s2 = s1 ++ s2
 
--- | The general rendering interface.
-fullRender :: Mode                     -- ^ Rendering mode
-           -> Int                      -- ^ Line length
-           -> Float                    -- ^ Ribbons per line
-           -> (TextDetails -> a -> a)  -- ^ What to do with text
-           -> a                        -- ^ What to do at the end
-           -> Doc b                    -- ^ The document
-           -> a                        -- ^ Result
+-- | The general rendering interface. Please refer to the @Style@ and @Mode@
+-- types for a description of rendering mode, line length and ribbons.
+fullRender :: Mode                    -- ^ Rendering mode.
+           -> Int                     -- ^ Line length.
+           -> Float                   -- ^ Ribbons per line.
+           -> (TextDetails -> a -> a) -- ^ What to do with text.
+           -> a                       -- ^ What to do at the end.
+           -> Doc b                   -- ^ The document.
+           -> a                       -- ^ Result.
 fullRender m l r txt = fullRenderAnn m l r annTxt
   where
   annTxt (NoAnnot s _) = txt s
   annTxt _             = id
 
-fullRenderAnn :: Mode                     -- ^ Rendering mode
-           -> Int                      -- ^ Line length
-           -> Float                    -- ^ Ribbons per line
-           -> (AnnotDetails b -> a -> a)  -- ^ What to do with text
-           -> a                        -- ^ What to do at the end
-           -> Doc b                    -- ^ The document
-           -> a                        -- ^ Result
+-- | The general rendering interface, supporting annotations. Please refer to
+-- the @Style@ and @Mode@ types for a description of rendering mode, line
+-- length and ribbons.
+fullRenderAnn :: Mode                       -- ^ Rendering mode.
+              -> Int                        -- ^ Line length.
+              -> Float                      -- ^ Ribbons per line.
+              -> (AnnotDetails b -> a -> a) -- ^ What to do with text.
+              -> a                          -- ^ What to do at the end.
+              -> Doc b                      -- ^ The document.
+              -> a                          -- ^ Result.
 fullRenderAnn OneLineMode _ _ txt end doc
   = easyDisplay spaceText (\_ y -> y) txt end (reduceDoc doc)
 fullRenderAnn LeftMode    _ _ txt end doc
@@ -1049,7 +1070,10 @@ display m !page_width !ribbon_width txt end doc
 
 -- Rendering Annotations -------------------------------------------------------
 
-data Span a = Span { spanStart
+-- | A @Span@ represents the result of an annotation after a @Doc@ has been
+-- rendered, capturing where the annotation now starts and ends in the rendered
+-- output.
+data Span a = Span { spanStart      :: !Int
                    , spanLength     :: !Int
                    , spanAnnotation :: a
                    } deriving (Show,Eq)
@@ -1060,15 +1084,17 @@ instance Functor Span where
 
 -- State required for generating document spans.
 data Spans a = Spans { sOffset :: !Int
-                       -- ^ Current offset from the end of the document
+                       -- ^ Current offset from the end of the document.
                      , sStack  :: [Int -> Span a]
-                       -- ^ Currently open spans
+                       -- ^ Currently open spans.
                      , sSpans  :: [Span a]
-                       -- ^ Collected annotation regions
+                       -- ^ Collected annotation regions.
                      , sOutput :: String
-                       -- ^ Collected output
+                       -- ^ Collected output.
                      }
 
+-- | Render an annotated @Doc@ to a String and list of annotations (see 'Span')
+-- using the default @Style@ (see 'style').
 renderSpans :: Doc ann -> (String,[Span ann])
 renderSpans  = finalize
              . fullRenderAnn (mode style) (lineLength style) (ribbonsPerLine style)
@@ -1106,11 +1132,11 @@ renderSpans  = finalize
 -- | Render out a String, interpreting the annotations as part of the resulting
 -- document.
 --
--- IMPORTANT: the size of the annotation string does NOT figure into the layout
--- of the document, so the document will lay out as though the annotations are
--- not present.
-renderDecorated :: (ann -> String) -- ^ Starting an annotation
-                -> (ann -> String) -- ^ Ending an annotation
+-- /IMPORTANT/: the size of the annotation string does NOT figure into the
+-- layout of the document, so the document will lay out as though the
+-- annotations are not present.
+renderDecorated :: (ann -> String) -- ^ Starting an annotation.
+                -> (ann -> String) -- ^ Ending an annotation.
                 -> Doc ann -> String
 renderDecorated startAnn endAnn =
   finalize . fullRenderAnn (mode style) (lineLength style) (ribbonsPerLine style)
@@ -1134,10 +1160,10 @@ renderDecorated startAnn endAnn =
 -- | Render a document with annotations, by interpreting the start and end of
 -- the annotations, as well as the text details in the context of a monad.
 renderDecoratedM :: Monad m
-                 => (ann    -> m r) -- ^ Starting an annotation
-                 -> (ann    -> m r) -- ^ Ending an annotation
-                 -> (String -> m r) -- ^ Text formatting
-                 -> m r             -- ^ Document end
+                 => (ann    -> m r) -- ^ Starting an annotation.
+                 -> (ann    -> m r) -- ^ Ending an annotation.
+                 -> (String -> m r) -- ^ Text formatting.
+                 -> m r             -- ^ Document end.
                  -> Doc ann -> m r
 renderDecoratedM startAnn endAnn txt docEnd =
   finalize . fullRenderAnn (mode style) (lineLength style) (ribbonsPerLine style)
