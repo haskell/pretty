@@ -299,7 +299,7 @@ vcat = liftList Ann.vcat
 --
 -- * @'nest' k ('nest' k' x) = 'nest' (k+k') x@
 --
--- * @'nest' k (x '<>' y) = 'nest' k z '<>' 'nest' k y@
+-- * @'nest' k (x '<>' y) = 'nest' k x '<>' 'nest' k y@
 --
 -- * @'nest' k (x '$$' y) = 'nest' k x '$$' 'nest' k y@
 --
