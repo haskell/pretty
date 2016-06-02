@@ -18,6 +18,7 @@ import TestStructures
 import UnitLargeDoc
 import UnitPP1
 import UnitT3911
+import UnitT32
 
 import Control.Monad
 import Data.Char (isSpace)
@@ -39,6 +40,7 @@ main = do
     -- unit tests
     testPP1
     testT3911
+    testT32
     testLargeDoc
 
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

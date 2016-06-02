@@ -62,6 +62,7 @@ Test-Suite test-pretty
         UnitLargeDoc
         UnitPP1
         UnitT3911
+        UnitT32
     extensions: CPP, BangPatterns, DeriveGeneric
     include-dirs: src/Text/PrettyPrint/Annotated
     ghc-options: -rtsopts -with-rtsopts=-K2M

@@ -695,7 +695,7 @@ beside p@(Beside p1 g1 q1) g2 q2
          | otherwise             = beside (reduceDoc p) g2 q2
 beside p@(Above{})         g q   = let !d = reduceDoc p in beside d g q
 beside (NilAbove p)        g q   = nilAbove_ $! beside p g q
-beside (TextBeside t p)    g q   = TextBeside t $! rest
+beside (TextBeside t p)    g q   = TextBeside t rest
                                where
                                   rest = case p of
                                            Empty -> nilBeside g q
