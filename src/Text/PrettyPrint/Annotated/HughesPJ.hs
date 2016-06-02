@@ -262,7 +262,11 @@ data TextDetails = Chr  {-# UNPACK #-} !Char -- ^ A single Char fragment
 -- Combining @Doc@ values
 #if __GLASGOW_HASKELL__ >= 800
 instance Semi.Semigroup (Doc a) where
+#ifndef TESTING
     (<>) = (Text.PrettyPrint.Annotated.HughesPJ.<>)
+#else
+    (<>) = (PrettyTestVersion.<>)
+#endif
 
 instance Monoid (Doc a) where
     mempty  = empty
