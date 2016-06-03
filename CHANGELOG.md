@@ -1,5 +1,10 @@
 # Pretty library change log
 
+## 1.1.3.4 -- 3rd June, 2016
+
+* Fix over-zeleaous use of strictness causing stack allocation, fixes part of
+  issue #32 (by Neil Mitchell).
+
 ## 1.1.3.3 -- 29th February, 2016
 
 * Improve documentation.
