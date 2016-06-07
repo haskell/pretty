@@ -22,7 +22,7 @@
 --
 -- For more information you can refer to the
 -- <http://belle.sourceforge.net/doc/hughes95design.pdf original paper> that
--- serves as the basis for this libraries design: /The Design -- of a
+-- serves as the basis for this libraries design: /The Design of a
 -- Pretty-printing Library/ by John Hughes, in Advanced Functional Programming,
 -- 1995.
 --
