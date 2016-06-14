@@ -7,7 +7,7 @@ import Control.Exception
 
 testLargeDoc :: IO ()
 testLargeDoc = do
-  putStrLn "Testing large doc..."
+  Prelude.putStrLn "Testing large doc..."
   evaluate largeDocRender
   return ()
 

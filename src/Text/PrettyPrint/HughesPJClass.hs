@@ -1,6 +1,11 @@
 #if __GLASGOW_HASKELL__ >= 701
 {-# LANGUAGE Safe #-}
 #endif
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -31,6 +36,7 @@ module Text.PrettyPrint.HughesPJClass (
   ) where
 
 import Text.PrettyPrint.HughesPJ
+import Data.String (fromString)
 
 -- | Level of detail in the pretty printed output. Level 0 is the least
 -- detail.
@@ -44,25 +50,25 @@ prettyNormal = PrettyLevel 0
 -- | Pretty printing class. The precedence level is used in a similar way as in
 -- the 'Show' class. Minimal complete definition is either 'pPrintPrec' or
 -- 'pPrint'.
-class Pretty a where
-  pPrintPrec :: PrettyLevel -> Rational -> a -> Doc
+class Chars string => Pretty string a where
+  pPrintPrec :: PrettyLevel -> Rational -> a -> Doc string
   pPrintPrec _ _ = pPrint
 
-  pPrint :: a -> Doc
+  pPrint :: a -> Doc string
   pPrint = pPrintPrec prettyNormal 0
 
-  pPrintList :: PrettyLevel -> [a] -> Doc
-  pPrintList l = brackets . fsep . punctuate comma . map (pPrintPrec l 0)
+  pPrintList :: PrettyLevel -> [a] -> Doc string
+  pPrintList l = brackets . fsep . punctuate comma . fmap (pPrintPrec l 0)
 
 #if __GLASGOW_HASKELL__ >= 708
   {-# MINIMAL pPrintPrec | pPrint #-}
 #endif
 
 -- | Pretty print a value with the 'prettyNormal' level.
-prettyShow :: (Pretty a) => a -> String
+prettyShow :: (Pretty string a) => a -> string
 prettyShow = render . pPrint
 
-pPrint0 :: (Pretty a) => PrettyLevel -> a -> Doc
+pPrint0 :: (Pretty string a) => PrettyLevel -> a -> Doc string
 pPrint0 l = pPrintPrec l 0
 
 appPrec :: Rational
@@ -70,75 +76,75 @@ appPrec = 10
 
 -- | Parenthesize an value if the boolean is true.
 {-# DEPRECATED prettyParen "Please use 'maybeParens' instead" #-}
-prettyParen :: Bool -> Doc -> Doc
+prettyParen :: Chars string => Bool -> Doc string -> Doc string
 prettyParen = maybeParens
 
 -- Various Pretty instances
-instance Pretty Int where pPrint = int
+instance Chars string => Pretty string Int where pPrint = int
 
-instance Pretty Integer where pPrint = integer
+instance Chars string => Pretty string Integer where pPrint = integer
 
-instance Pretty Float where pPrint = float
+instance Chars string => Pretty string Float where pPrint = float
 
-instance Pretty Double where pPrint = double
+instance Chars string => Pretty string Double where pPrint = double
 
-instance Pretty () where pPrint _ = text "()"
+instance Chars string => Pretty string () where pPrint _ = text "()"
 
-instance Pretty Bool where pPrint = text . show
+instance Chars string => Pretty string Bool where pPrint = text . fromString . show
 
-instance Pretty Ordering where pPrint = text . show
+instance Chars string => Pretty string Ordering where pPrint = text . fromString . show
 
-instance Pretty Char where
+instance Chars string => Pretty string Char where
   pPrint = char
-  pPrintList _ = text . show
+  pPrintList _ = text . fromString . show
 
-instance (Pretty a) => Pretty (Maybe a) where
+instance (Chars string, Pretty string a) => Pretty string (Maybe a) where
   pPrintPrec _ _ Nothing = text "Nothing"
   pPrintPrec l p (Just x) =
     prettyParen (p > appPrec) $ text "Just" <+> pPrintPrec l (appPrec+1) x
 
-instance (Pretty a, Pretty b) => Pretty (Either a b) where
+instance (Pretty string a, Pretty string b) => Pretty string (Either a b) where
   pPrintPrec l p (Left x) =
     prettyParen (p > appPrec) $ text "Left" <+> pPrintPrec l (appPrec+1) x
   pPrintPrec l p (Right x) =
     prettyParen (p > appPrec) $ text "Right" <+> pPrintPrec l (appPrec+1) x
 
-instance (Pretty a) => Pretty [a] where
+instance (Pretty string a) => Pretty string [a] where
   pPrintPrec l _ = pPrintList l
 
-instance (Pretty a, Pretty b) => Pretty (a, b) where
+instance (Pretty string a, Pretty string b) => Pretty string (a, b) where
   pPrintPrec l _ (a, b) =
     parens $ fsep $ punctuate comma [pPrint0 l a, pPrint0 l b]
 
-instance (Pretty a, Pretty b, Pretty c) => Pretty (a, b, c) where
+instance (Pretty string a, Pretty string b, Pretty string c) => Pretty string (a, b, c) where
   pPrintPrec l _ (a, b, c) =
     parens $ fsep $ punctuate comma [pPrint0 l a, pPrint0 l b, pPrint0 l c]
 
-instance (Pretty a, Pretty b, Pretty c, Pretty d) => Pretty (a, b, c, d) where
+instance (Pretty string a, Pretty string b, Pretty string c, Pretty string d) => Pretty string (a, b, c, d) where
   pPrintPrec l _ (a, b, c, d) =
     parens $ fsep $ punctuate comma
       [pPrint0 l a, pPrint0 l b, pPrint0 l c, pPrint0 l d]
 
-instance (Pretty a, Pretty b, Pretty c, Pretty d, Pretty e) => Pretty (a, b, c, d, e) where
+instance (Pretty string a, Pretty string b, Pretty string c, Pretty string d, Pretty string e) => Pretty string (a, b, c, d, e) where
   pPrintPrec l _ (a, b, c, d, e) =
     parens $ fsep $ punctuate comma
       [pPrint0 l a, pPrint0 l b, pPrint0 l c, pPrint0 l d, pPrint0 l e]
 
-instance (Pretty a, Pretty b, Pretty c, Pretty d, Pretty e, Pretty f) => Pretty (a, b, c, d, e, f) where
+instance (Pretty string a, Pretty string b, Pretty string c, Pretty string d, Pretty string e, Pretty string f) => Pretty string (a, b, c, d, e, f) where
   pPrintPrec l _ (a, b, c, d, e, f) =
     parens $ fsep $ punctuate comma
       [pPrint0 l a, pPrint0 l b, pPrint0 l c,
         pPrint0 l d, pPrint0 l e, pPrint0 l f]
 
-instance (Pretty a, Pretty b, Pretty c, Pretty d, Pretty e, Pretty f, Pretty g) =>
-         Pretty (a, b, c, d, e, f, g) where
+instance (Pretty string a, Pretty string b, Pretty string c, Pretty string d, Pretty string e, Pretty string f, Pretty string g) =>
+         Pretty string (a, b, c, d, e, f, g) where
   pPrintPrec l _ (a, b, c, d, e, f, g) =
     parens $ fsep $ punctuate comma
       [pPrint0 l a, pPrint0 l b, pPrint0 l c,
         pPrint0 l d, pPrint0 l e, pPrint0 l f, pPrint0 l g]
 
-instance (Pretty a, Pretty b, Pretty c, Pretty d, Pretty e, Pretty f, Pretty g, Pretty h) =>
-         Pretty (a, b, c, d, e, f, g, h) where
+instance (Pretty string a, Pretty string b, Pretty string c, Pretty string d, Pretty string e, Pretty string f, Pretty string g, Pretty string h) =>
+         Pretty string (a, b, c, d, e, f, g, h) where
   pPrintPrec l _ (a, b, c, d, e, f, g, h) =
     parens $ fsep $ punctuate comma
       [pPrint0 l a, pPrint0 l b, pPrint0 l c,

@@ -1,3 +1,8 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+
 -----------------------------------------------------------------------------
 -- Module      :  HughesPJQuickCheck
 -- Copyright   :  (c) 2008 Benedikt Huber
@@ -11,9 +16,13 @@
 -- 3) Testing bug fixes (whitebox)
 --
 -----------------------------------------------------------------------------
-import PrettyTestVersion
+import PrettyTestVersion hiding (Chars(..))
+import PrettyTestVersion (Chars)
+import qualified PrettyTestVersion as Chars
 import TestGenerators
-import TestStructures
+import TestStructures hiding (Text)
+import qualified TestStructures
+import Text ()
 
 import UnitLargeDoc
 import UnitPP1
@@ -23,9 +32,25 @@ import UnitT32
 import Control.Monad
 import Data.Char (isSpace)
 import Data.List (intersperse)
+import Data.String (IsString(fromString))
+import Data.Text (Text)
+import qualified Data.Text as Text
+import qualified Data.Text.IO as Text
 import Debug.Trace
 
 import Test.QuickCheck
+
+instance Chars Text where
+    cons = Text.cons
+    snoc s c = Text.append s (Text.singleton c)
+    length = Text.length
+    toString = Text.unpack
+    putStr = Text.putStr
+    putStrLn = Text.putStrLn
+    filter = Text.filter
+    lines = Text.lines
+    unlines = Text.unlines
+    map = Text.map
 
 main :: IO ()
 main = do
@@ -76,11 +101,11 @@ myAssert msg b = putStrLn $ (if b then "Ok, passed " else "Failed test:\n  ") ++
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -- compare text details
-tdEq :: TextDetails -> TextDetails -> Bool
+tdEq :: (Chars string) => TextDetails string -> TextDetails string -> Bool
 tdEq td1 td2 = (tdToStr td1) == (tdToStr td2)
 
 -- algebraic equality on reduced docs
-docEq :: RDoc () -> RDoc () -> Bool
+docEq :: (Chars string) => RDoc string () -> RDoc string () -> Bool
 docEq rd1 rd2 = case (rd1, rd2) of
     (Empty, Empty) -> True
     (NoDoc, NoDoc) -> True
@@ -91,42 +116,42 @@ docEq rd1 rd2 = case (rd1, rd2) of
     (d1,d2) -> False
     
 -- algebraic equality, with text reduction
-deq :: Doc () -> Doc () -> Bool
+deq :: (string ~ Text, Chars string) => Doc string () -> Doc string () -> Bool
 deq d1 d2 = docEq (reduceDoc' d1) (reduceDoc' d2) where
     reduceDoc' = mergeTexts . reduceDoc
-deqs :: [Doc ()] -> [Doc ()] -> Bool
+deqs :: (string ~ Text, Chars string) => [Doc string ()] -> [Doc string ()] -> Bool
 deqs ds1 ds2 = 
     case zipE ds1 ds2 of
         Nothing    -> False
         (Just zds) -> all (uncurry deq) zds
 
         
-zipLayouts :: Doc () -> Doc () -> Maybe [(Doc (),Doc ())]
+zipLayouts :: Chars string => Doc string () -> Doc string () -> Maybe [(Doc string (),Doc string ())]
 zipLayouts d1 d2 = zipE (reducedDocs d1) (reducedDocs d2)
     where reducedDocs = map mergeTexts . flattenDoc
 
-zipE :: [Doc ()] -> [Doc ()] -> Maybe [(Doc (), Doc ())]
+zipE :: Chars string => [Doc string ()] -> [Doc string ()] -> Maybe [(Doc string (), Doc string ())]
 zipE l1 l2 | length l1 == length l2 = Just $ zip l1 l2
            | otherwise              = Nothing
 
 -- algebraic equality for layouts (without permutations)
-lseq :: Doc () -> Doc () -> Bool
+lseq :: (string ~ Text, Chars string) => Doc string () -> Doc string () -> Bool
 lseq d1 d2 = maybe False id . fmap (all (uncurry docEq)) $ zipLayouts d1 d2
 
 -- abstract render equality for layouts
 -- should only be performed if the number of layouts is reasonably small
-rdeq :: Doc () -> Doc () -> Bool
+rdeq :: string ~ Text => Doc string () -> Doc string () -> Bool
 rdeq d1 d2 = maybe False id . fmap (all (uncurry layoutEq)) $ zipLayouts d1 d2
     where layoutEq d1 d2 = (abstractLayout d1) == (abstractLayout d2)
 
-layoutsCountBounded :: Int -> [Doc ()] -> Bool
+layoutsCountBounded :: Chars string => Int -> [Doc string ()] -> Bool
 layoutsCountBounded k docs = isBoundedBy k (concatMap flattenDoc docs)
   where
     isBoundedBy k [] = True
     isBoundedBy 0 (x:xs) = False
     isBoundedBy k (x:xs) = isBoundedBy (k-1) xs
 
-layoutCountBounded :: Int -> Doc () -> Bool
+layoutCountBounded :: Chars string => Int -> Doc string () -> Bool
 layoutCountBounded k doc = layoutsCountBounded k [doc]
 
 maxLayouts :: Int
@@ -136,9 +161,10 @@ infix 4 `deq`
 infix 4 `lseq`
 infix 4 `rdeq`
 
-debugRender :: Int -> Doc () -> IO ()
-debugRender k = putStr . visibleSpaces . renderStyle (Style PageMode k 1)
-visibleSpaces = unlines . map (map visibleSpace) . lines
+debugRender :: Chars string => Int -> Doc string () -> IO ()
+debugRender k = Chars.putStr . visibleSpaces . renderStyle (Style PageMode k 1)
+visibleSpaces :: Chars string => string -> string
+visibleSpaces = mconcat . map (`Chars.snoc` '\n') . map (Chars.map visibleSpace) . Chars.lines
 
 visibleSpace :: Char -> Char
 visibleSpace ' ' = '.'
@@ -156,11 +182,15 @@ Monoid laws for <>,<+>,$$,$+$
 <a,b 2> empty * x     = x
 <a,b 3> x * empty     = x
 -}
+prop_1 :: (Doc Text () -> Doc Text () -> Doc Text ()) -> Doc Text () -> Doc Text () -> Doc Text () -> Property
 prop_1 op x y z = classify (any isEmpty [x,y,z]) "empty x, y or z" $
                    ((x `op` y) `op` z) `deq` (x `op` (y `op` z))
+prop_2 :: forall string a. (Doc string a -> Doc Text () -> Doc Text ()) -> Doc Text () -> Property
 prop_2 op x     = classify (isEmpty x) "empty" $ (empty `op` x) `deq` x
+prop_3 :: forall string a. (Doc string a -> Doc Text () -> Doc Text ()) -> Doc Text () -> Property
 prop_3 op x     = classify (isEmpty x) "empty" $ x `deq` (empty `op` x)
 
+check_monoid :: IO ()
 check_monoid = do
     putStrLn " = Monoid Laws ="
     mapM_ (myTest' 5 maxTests "Associativity") [ liftDoc3 (prop_1 op) | op <- allops ]
@@ -175,11 +205,14 @@ Laws for text
 <t1>    text s <> text t        = text (s++t)
 <t2>    text "" <> x            = x, if x non-empty [only true if x does not start with nest, because of <n6> ]
 -}
-prop_t1 s t = text' s <> text' t `deq` text (unText s ++  unText t)
+prop_t1 :: TestStructures.Text Text -> TestStructures.Text Text -> Bool
+prop_t1 s t = text' s <> text' t `deq` text (unText s `mappend`  unText t)
+prop_t2 :: Doc Text () -> Property
 prop_t2  x   = not (isEmpty x) ==> text "" <> x `deq` x
+prop_t2_a :: Doc Text () -> Property
 prop_t2_a x   = not (isEmpty x) && not (isNest x) ==> text "" <> x `deq` x
 
-isNest :: Doc () -> Bool
+isNest :: (Chars string) => Doc string () -> Bool
 isNest d = case reduceDoc d of
     (Nest _ _) -> True
     (Union d1 d2) -> isNest d1 || isNest d2
@@ -201,11 +234,17 @@ Laws for nest
 <n5>    nest k empty            = empty
 <n6>    x <> nest k y           = x <> y, if x non-empty
 -}
+prop_n1 :: Doc Text () -> Bool
 prop_n1 x      = nest 0 x                `deq` x
+prop_n2 :: Int -> Int -> Doc Text () -> Bool
 prop_n2 k k' x = nest k (nest k' x)      `deq` nest (k+k') x
+prop_n3 :: Int -> Int -> Doc Text () -> Bool
 prop_n3 k k' x  = nest k (nest k' x)      `deq` nest (k+k') x 
+prop_n4 :: Int -> Doc Text () -> Doc Text () -> Bool
 prop_n4 k x y  = nest k (x $$ y)         `deq` nest k x $$ nest k y
+prop_n5 :: Int -> Bool
 prop_n5 k     =  nest k empty            `deq` empty
+prop_n6 :: Doc Text () -> Int -> Doc Text () -> Property
 prop_n6 x k y =  not (isEmpty x) ==>  
                  x <> nest k y           `deq` x <> y
 check_n = do
@@ -224,8 +263,10 @@ check_n = do
 <m2>    (x $$ y) <> z = x $$ (y <> z)
         if y non-empty
 -}    
+prop_m1 :: TestStructures.Text Text -> Doc Text () -> Doc Text () -> Bool
 prop_m1 s x y = (text' s <> x) $$ y `deq` text' s <> ((text "" <> x) $$ 
-                 nest (-length (unText s)) y)
+                 nest (-Chars.length (unText s)) y)
+prop_m2 :: Doc Text () -> Doc Text () -> Doc Text () -> Property
 prop_m2 x y z = not (isEmpty y) ==>
                 (x $$ y) <> z      `deq` x $$ (y <> z)
 check_m = do
@@ -243,22 +284,30 @@ Laws for list versions
 <l2>    nest k (sep ps) = sep (map (nest k) ps)
         ...ditto hsep, hcat, vcat, fill...
 -}    
+prop_l1 :: ([Doc string a] -> Doc Text ()) -> [Doc string a] -> [Doc string a] -> Bool
 prop_l1 sp ps qs = 
     sp (ps++[empty]++qs)   `rdeq` sp (ps ++ qs)
+prop_l2 :: t -> Int -> [Doc Text ()] -> Bool
 prop_l2 sp k ps  = nest k (sep ps)        `deq` sep (map (nest k) ps)
 
 
+prop_l1' :: Chars string
+         => ([Doc string ()] -> Doc Text ())
+         -> CDocList string -> CDocList string -> Property
 prop_l1' sp cps cqs =
     let [ps,qs] = map buildDocList [cps,cqs] in 
     layoutCountBounded maxLayouts (sp (ps++qs)) ==> prop_l1 sp ps qs
+prop_l2' :: t -> Int -> CDocList Text -> Bool
 prop_l2' sp k  ps = prop_l2 sp k (buildDocList ps)
 check_l = do
     allCats $ myTest "l1" . prop_l1'
     allCats $ myTest "l2" . prop_l2'
     where
     allCats = flip mapM_ [ sep, hsep, cat, hcat, vcat, fsep, fcat ]
-prop_l1_fail_1 = [ text "a" ]
-prop_l1_fail_2 = [ text "a" $$  text "b" ]
+prop_l1_fail_1 :: [Doc Text a]
+prop_l1_fail_1 = [ text ("a" :: Text) ]
+prop_l1_fail_2 :: [Doc Text a]
+prop_l1_fail_2 = [ text ("a" :: Text) $$  text ("b" :: Text) ]
 
 {-
 Laws for oneLiner
@@ -268,8 +317,11 @@ Laws for oneLiner
 
 [One liner only takes reduced arguments]
 -}    
+oneLinerR :: forall a. Doc Text a -> Doc Text a
 oneLinerR = oneLiner . reduceDoc
+prop_o1 :: Int -> Doc Text () -> Bool
 prop_o1 k p = oneLinerR (nest k p) `deq` nest k (oneLinerR p)
+prop_o2 :: Doc Text () -> Doc Text () -> Bool
 prop_o2 x y = oneLinerR (x <> y) `deq` oneLinerR x <> oneLinerR y 
 
 check_o = do
@@ -284,13 +336,13 @@ Definitions of list versions
 <ldef2> hcat = foldr (<>) empty
 <ldef3> hsep = foldr (<+>) empty
 -}
-prop_hcat :: [Doc ()] -> Bool
+prop_hcat :: string ~ Text => [Doc string ()] -> Bool
 prop_hcat ds = hcat ds `deq` (foldr (<>) empty) ds
 
-prop_hsep :: [Doc ()] -> Bool
+prop_hsep :: string ~ Text => [Doc string ()] -> Bool
 prop_hsep ds = hsep ds `deq` (foldr (<+>) empty) ds
 
-prop_vcat :: [Doc ()] -> Bool
+prop_vcat :: string ~ Text => [Doc string ()] -> Bool
 prop_vcat ds = vcat ds `deq` (foldr ($$) empty) ds
 
 {-
@@ -298,10 +350,10 @@ Update (pretty-1.1.0):
 *failing* definition of sep: oneLiner (hsep ps) `union` vcat ps
 <ldef4> ?
 -}
-prop_sep :: [Doc ()] -> Bool
+prop_sep :: string ~ Text => [Doc string ()] -> Bool
 prop_sep ds = sep ds `rdeq` (sepDef ds)
 
-sepDef :: [Doc ()] -> Doc ()
+sepDef :: string ~ Text => [Doc string ()] -> Doc string ()
 sepDef docs = let ds = filter (not . isEmpty) docs in
               case ds of
                   [] -> empty
@@ -363,31 +415,31 @@ Definition of fill (fcat/fsep)
 -- ==> (nest 1; text a; text b; nest -5 c)
 
 -}
-prop_fcat_vcat :: [Doc ()] -> Bool
+prop_fcat_vcat :: string ~ Text => [Doc string ()] -> Bool
 prop_fcat_vcat ds = last (flattenDoc $ fcat ds) `deq` last (flattenDoc $ vcat ds)
 
-prop_fcat :: [Doc ()] -> Bool
+prop_fcat :: string ~ Text => [Doc string ()] -> Bool
 prop_fcat ds = fcat ds `rdeq` fillDef False (filter (not . isEmpty) ds)
 
-prop_fsep :: [Doc ()] -> Bool
+prop_fsep :: string ~ Text => [Doc string ()] -> Bool
 prop_fsep ds = fsep ds `rdeq` fillDef True (filter (not . isEmpty) ds)
 
-prop_fcat_old :: [Doc ()] -> Bool
+prop_fcat_old :: string ~ Text => [Doc string ()] -> Bool
 prop_fcat_old ds = fillOld2 False ds `rdeq` fillDef False (filter (not . isEmpty) ds)
 
-prop_fcat_old_old :: [Doc ()] -> Bool
+prop_fcat_old_old :: string ~ Text => [Doc string ()] -> Bool
 prop_fcat_old_old ds = fillOld2 False ds `rdeq` fillDefOld False (filter (not . isEmpty) ds)
 
-prop_restrict_sz :: (Testable a) => Int -> ([Doc ()] -> a) -> ([Doc ()] -> Property) 
+prop_restrict_sz :: (string ~ Text, Testable a) => Int -> ([Doc string ()] -> a) -> ([Doc string ()] -> Property) 
 prop_restrict_sz k p ds = layoutCountBounded k (fsep ds) ==> p ds
 
-prop_restrict_ol :: (Testable a) => ([Doc ()] -> a) -> ([Doc ()] -> Property)
+prop_restrict_ol :: (string ~ Text, Testable a) => ([Doc string ()] -> a) -> ([Doc string ()] -> Property)
 prop_restrict_ol p ds = (all isOneLiner . map normalize $ ds) ==> p ds
 
-prop_restrict_no_nest_start :: (Testable a) => ([Doc ()] -> a) -> ([Doc ()] -> Property)
+prop_restrict_no_nest_start :: (string ~ Text, Testable a) => ([Doc string ()] -> a) -> ([Doc string ()] -> Property)
 prop_restrict_no_nest_start p ds = (all (not .isNest) ds) ==> p ds
 
-fillDef :: Bool -> [Doc ()] -> Doc ()
+fillDef :: string ~ Text => Bool -> [Doc string ()] -> Doc string ()
 fillDef g = normalize . fill' 0 . filter (not.isEmpty) . map reduceDoc
   where
     fill' _ [] = Empty
@@ -404,7 +456,7 @@ fillDef g = normalize . fill' 0 . filter (not.isEmpty) . map reduceDoc
     oneLiner' (Nest k d) = oneLiner' d
     oneLiner' d          = oneLiner d
 
-($*$) :: RDoc () -> RDoc () -> RDoc ()
+($*$) :: string ~ Text => RDoc string () -> RDoc string () -> RDoc string ()
 ($*$) p ps = case flattenDoc p of
     [] -> NoDoc
     ls -> foldr1 Union (map combine ls) 
@@ -412,7 +464,7 @@ fillDef g = normalize . fill' 0 . filter (not.isEmpty) . map reduceDoc
     combine p | isOneLiner p = p $+$ ps
               | otherwise    = p $$  ps
 
-fillDefOld :: Bool -> [Doc ()] -> Doc ()
+fillDefOld :: string ~ Text => Bool -> [Doc string ()] -> Doc string ()
 fillDefOld g = normalize . fill' . filter (not.isEmpty) . map normalize where 
     fill' [] = Empty
     fill' [p1] = p1
@@ -423,7 +475,7 @@ fillDefOld g = normalize . fill' . filter (not.isEmpty) . map normalize where
     append = if g then (<+>) else (<>)
     union = Union
 
-check_fill_prop :: Testable a => String -> ([Doc ()] -> a) -> IO ()
+check_fill_prop :: string ~ Text => Testable a => String -> ([Doc string ()] -> a) -> IO ()
 check_fill_prop msg p = myTest msg (prop_restrict_sz maxLayouts p . buildDocList)
 
 check_fill_def_fail :: IO ()
@@ -488,7 +540,7 @@ recurse :: a -> (a, Bool)
 recurse a = (a,True)
 -- strategy: generic synthesize with stop condition 
 -- terms are combined top-down, left-right (latin text order)
-genericProp :: (a -> a -> a) -> (Doc () -> (a,Bool)) -> Doc () -> a
+genericProp :: Chars string => (a -> a -> a) -> (Doc string () -> (a,Bool)) -> Doc string () -> a
 genericProp c q doc =
     case q doc of
         (v,False) -> v
@@ -510,7 +562,7 @@ genericProp c q doc =
  * The argument of NilAbove is never Empty. Therefore
     a NilAbove occupies at least two lines.
 -}
-prop_inv1 :: Doc () -> Bool
+prop_inv1 :: string ~ Text => Doc string () -> Bool
 prop_inv1 d = genericProp (&&) nilAboveNotEmpty d where
     nilAboveNotEmpty (NilAbove Empty) = stop False
     nilAboveNotEmpty _ = recurse True
@@ -518,7 +570,7 @@ prop_inv1 d = genericProp (&&) nilAboveNotEmpty d where
 {-
   * The argument of @TextBeside@ is never @Nest@.  
 -}
-prop_inv2 :: Doc () -> Bool
+prop_inv2 :: string ~ Text => Doc string () -> Bool
 prop_inv2 = genericProp (&&) textBesideNotNest where
     textBesideNotNest (TextBeside _ (Nest _ _)) = stop False
     textBesideNotNest _ = recurse True
@@ -526,10 +578,11 @@ prop_inv2 = genericProp (&&) textBesideNotNest where
   * The layouts of the two arguments of @Union@ both flatten to the same 
     string 
 -}
-prop_inv3 :: Doc () -> Bool
+prop_inv3 :: string ~ Text => Doc string () -> Bool
 prop_inv3 = genericProp (&&) unionsFlattenSame where
     unionsFlattenSame (Union d1 d2) = stop (pairwiseEqual (extractTexts d1 ++ extractTexts d2))
     unionsFlattenSame _ = recurse True
+pairwiseEqual :: forall a. Eq a => [a] -> Bool
 pairwiseEqual (x:y:zs) = x==y && pairwiseEqual (y:zs)
 pairwiseEqual _ = True
 
@@ -537,7 +590,7 @@ pairwiseEqual _ = True
 {-
   * The arguments of @Union@ are either @TextBeside@, or @NilAbove@.
 -}
-prop_inv4 :: Doc () -> Bool
+prop_inv4 :: string ~ Text => Doc string () -> Bool
 prop_inv4 = genericProp (&&) unionArgs where
     unionArgs (Union d1 d2) | goodUnionArg d1 && goodUnionArg d2 = recurse True
                             | otherwise = stop False
@@ -551,7 +604,7 @@ prop_inv4 = genericProp (&&) unionArgs where
     an union. Therefore, the right argument of an union can never be equivalent
     to the empty set.
 -}
-prop_inv5 :: Doc () -> Bool
+prop_inv5 :: string ~ Text => Doc string () -> Bool
 prop_inv5 = genericProp (&&) unionArgs . reduceDoc where
     unionArgs NoDoc = stop False
     unionArgs (Union d1 d2) = stop $ genericProp (&&) noDocIsFirstLine d1 && nonEmptySet (reduceDoc d2)
@@ -563,19 +616,19 @@ prop_inv5 = genericProp (&&) unionArgs . reduceDoc where
   * An empty document is always represented by @Empty@.  It can't be
     hidden inside a @Nest@, or a @Union@ of two @Empty@s.
 -}
-prop_inv6 :: Doc () -> Bool
+prop_inv6 :: string ~ Text => Doc string () -> Bool
 prop_inv6 d | not (prop_inv1 d) || not (prop_inv2 d) = False
             | not (isEmptyDoc d) = True
             | otherwise = case d of Empty -> True ; _ -> False
 
-isEmptyDoc :: Doc () -> Bool
+isEmptyDoc :: string ~ Text => Doc string () -> Bool
 isEmptyDoc d = case emptyReduction d of Empty -> True; _ -> False
 
 {-
   * Consistency
   If all arguments of one of the list versions are empty documents, the list is an empty document
 -}
-prop_inv6a :: ([Doc ()] -> Doc ()) -> Property
+prop_inv6a :: string ~ Text => ([Doc string ()] -> Doc string ()) -> Property
 prop_inv6a sep = forAll emptyDocListGen $
     \ds -> isEmptyRepr (sep $ buildDocList ds)
   where
@@ -589,9 +642,10 @@ prop_inv6a sep = forAll emptyDocListGen $
     (3), this invariant means that the right argument must have at
     least two lines.
 -}
-counterexample_inv7 = cat [ text " ", nest 2 ( text "a") ]
+counterexample_inv7 :: forall a. Doc Text a
+counterexample_inv7 = cat [ text (" " :: Text), nest 2 ( text ("a" :: Text)) ]
 
-prop_inv7 :: Doc () -> Bool
+prop_inv7 :: string ~ Text => Doc string () -> Bool
 prop_inv7 = genericProp (&&) firstLonger where
     firstLonger (Union d1 d2) = (firstLineLength d1 >= firstLineLength d2, True)
     firstLonger _ = (True, True)
@@ -599,7 +653,7 @@ prop_inv7 = genericProp (&&) firstLonger where
 {- 
    * If we take as precondition: the arguments of cat,sep,fill do not start with Nest, invariant 7 holds
 -}
-prop_inv7_pre :: CDoc -> Bool
+prop_inv7_pre :: string ~ Text => CDoc string -> Bool
 prop_inv7_pre cdoc = nestStart True cdoc where
   nestStart nestOk doc = 
     case doc of
@@ -613,7 +667,7 @@ prop_inv7_pre cdoc = nestStart True cdoc where
 {-
    inv7_pre ==> inv7
 -}
-prop_inv7_a :: CDoc -> Property
+prop_inv7_a :: string ~ Text => CDoc string -> Property
 prop_inv7_a cdoc = prop_inv7_pre cdoc ==> prop_inv7 (buildDoc cdoc)
     
 check_invariants :: IO ()
@@ -648,11 +702,13 @@ check_invariants = do
 
    Here is a quick check property to ducment this.
 -}
-prop_negative_indent :: CDoc -> Property
+prop_negative_indent :: string ~ Text => CDoc string -> Property
 prop_negative_indent cdoc = noNegNest cdoc ==> noNegSpaces (buildDoc cdoc)
+noNegNest :: forall t. CDoc t -> Bool
 noNegNest = genericCProp (&&) notIsNegNest where
     notIsNegNest (CNest k _) | k < 0 = stop False
     notIsNegNest  _                  = recurse True
+noNegSpaces :: forall a. Doc Text a -> Bool
 noNegSpaces = go 0 . reduceDoc where 
     go k Empty = True
     go k (NilAbove d) = go k d
@@ -662,7 +718,7 @@ noNegSpaces = go 0 . reduceDoc where
     go k (Union d1 d2) = (if nonEmptySet d1 then (&&) (go k d1) else id) (go k d2)
     go k NoDoc = True
 
-counterexample_fail9 :: Doc ()
+counterexample_fail9 :: string ~ Text => Doc string ()
 counterexample_fail9 =  text "a" <> ( nest 2 ( text "b") $$  text "c")
 -- reduces to           textb "a" ; textb "b" ; nilabove ; nest -3 ; textb "c" ; empty
 
@@ -674,10 +730,12 @@ Consider the following example:
 It is the user's fault to use <+> in t2.
 -}
 
-tstmt =  (nest 6 $ text "/* double indented comment */") $+$
-         (nest 3 $ text "/* indented comment */") $+$
-         text "skip;"
+tstmt :: forall a. Doc Text a
+tstmt =  (nest 6 $ text ("/* double indented comment */" :: Text)) $+$
+         (nest 3 $ text ("/* indented comment */" :: Text)) $+$
+         text ("skip;" :: Text)
 
+t1 :: forall a. Doc Text a
 t1 = text "while(true)" $+$ (nest 2) tstmt
 {-
 while(true)
@@ -685,6 +743,7 @@ while(true)
      /* indented comment */
   skip;
 -}
+t2 :: forall a. Doc Text a
 t2 = text "while(true)" $+$ (nest 2 $ text "//" <+> tstmt)
 {-
 while(true)
@@ -695,6 +754,9 @@ skip;
                         
 -- (3) Touching non-prims
 -- ~~~~~~~~~~~~~~~~~~~~~~
+
+show' :: Show a => a -> Text
+show' = fromString . show
 
 check_non_prims :: IO ()
 check_non_prims = do
@@ -712,7 +774,7 @@ check_non_prims = do
         fsep [int 42, integer 42, float 42, double 42, rational 42]
         `rdeq`
         (fsep . map text) 
-            [show (42 :: Int), show (42 :: Integer), show (42 :: Float), show (42 :: Double), show (42 :: Rational)]
+            [show' (42 :: Int), show' (42 :: Integer), show' (42 :: Float), show' (42 :: Double), show' (42 :: Rational)]
     myTest "Definition of <+>" $ \cd1 cd2 -> 
         let (d1,d2) = (buildDoc cd1, buildDoc cd2) in 
         layoutsCountBounded maxLayouts [d1,d2] ==>
@@ -738,13 +800,13 @@ check_rendering = do
         let d = buildDoc cd in
         extractTextZZ (renderStyle (Style ZigZagMode 6 1.7) d) == extractText (oneLineRender d)
         
-extractText :: String -> String
-extractText = filter (not . isSpace)
+extractText :: Chars string => string -> string
+extractText = Chars.filter (not . isSpace)
 
-extractTextZZ :: String -> String
-extractTextZZ = filter (\c -> not (isSpace c) && c /= '/' && c /= '\\')
+extractTextZZ :: Chars string => string -> string
+extractTextZZ = Chars.filter (\c -> not (isSpace c) && c /= '/' && c /= '\\')
 
-punctuateDef :: Doc () -> [Doc ()] -> [Doc ()]
+punctuateDef :: Doc string () -> [Doc string ()] -> [Doc string ()]
 punctuateDef p [] = []
 punctuateDef p ps = 
     let (dsInit,dLast) = (init ps, last ps) in
@@ -761,7 +823,7 @@ putStrLn $ render' $ fillOld True [ text "c", text "c",empty, text "c", text "b"
 c c c
     b
 -}
-prop_fill_empty_reduce :: [Doc ()] -> Bool
+prop_fill_empty_reduce :: string ~ Text => [Doc string ()] -> Bool
 prop_fill_empty_reduce ds = fill True ds `deq` fillOld True (filter (not.isEmpty.reduceDoc) ds)
 
 check_improvements :: IO ()
@@ -770,10 +832,10 @@ check_improvements = do
            (prop_fill_empty_reduce . filter (not .isNest) . buildDocList)
 
 -- old implementation of fill
-fillOld :: Bool -> [Doc ()] -> RDoc ()
+fillOld :: forall string. string ~ Text => Bool -> [Doc string ()] -> RDoc string ()
 fillOld _ []     = empty
 fillOld g (p:ps) = fill1 g (reduceDoc p) 0 ps where
-    fill1 :: Bool -> RDoc () -> Int -> [Doc ()] -> Doc ()
+    fill1 :: Bool -> RDoc string () -> Int -> [Doc string ()] -> Doc string ()
     fill1 _ _                   k _  | k `seq` False = undefined
     fill1 _ NoDoc               _ _  = NoDoc
     fill1 g (p `Union` q)       k ys = fill1 g p k ys
@@ -788,7 +850,7 @@ fillOld g (p:ps) = fill1 g (reduceDoc p) 0 ps where
     fill1 _ (Above {})          _ _  = error "fill1 Above"
     fill1 _ (Beside {})         _ _  = error "fill1 Beside"
         -- fillNB gap textBesideArgument space_left docs
-    fillNB :: Bool -> Doc () -> Int -> [Doc ()] -> Doc ()
+    fillNB :: Bool -> Doc string () -> Int -> [Doc string ()] -> Doc string ()
     fillNB _ _           k _  | k `seq` False = undefined
     fillNB g (Nest _ p)  k ys  = fillNB g p k ys
     fillNB _ Empty _ []        = Empty
@@ -808,10 +870,10 @@ fillOld g (p:ps) = fill1 g (reduceDoc p) 0 ps where
 --                                          (fill (oneLiner p2 : ps))
 --                     `union`
 --                      p1 $$ fill ps
-fillOld2 :: Bool -> [Doc ()] -> RDoc ()
+fillOld2 :: forall string. string ~ Text => Bool -> [Doc string ()] -> RDoc string ()
 fillOld2 _ []     = empty
 fillOld2 g (p:ps) = fill1 g (reduceDoc p) 0 ps where
-    fill1 :: Bool -> RDoc () -> Int -> [Doc ()] -> Doc ()
+    fill1 :: Bool -> RDoc string () -> Int -> [Doc string ()] -> Doc string ()
     fill1 _ _                   k _  | k `seq` False = undefined
     fill1 _ NoDoc               _ _  = NoDoc
     fill1 g (p `Union` q)       k ys = fill1 g p k ys
@@ -826,7 +888,7 @@ fillOld2 g (p:ps) = fill1 g (reduceDoc p) 0 ps where
     fill1 _ (Above {})          _ _  = error "fill1 Above"
     fill1 _ (Beside {})         _ _  = error "fill1 Beside"
 
-    fillNB :: Bool -> Doc () -> Int -> [Doc ()] -> Doc ()
+    fillNB :: Bool -> Doc string () -> Int -> [Doc string ()] -> Doc string ()
     fillNB _ _           k _  | k `seq` False = undefined
     fillNB g (Nest _ p)  k ys  = fillNB g p k ys
     fillNB _ Empty _ []        = Empty
@@ -843,19 +905,19 @@ fillOld2 g (p:ps) = fill1 g (reduceDoc p) 0 ps where
 
 -- (5) Pretty printing RDocs and RDOC properties
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-prettyDoc :: Doc () -> Doc ()
+prettyDoc :: string ~ Text => Doc string () -> Doc string ()
 prettyDoc d = 
     case reduceDoc d of 
         Empty            -> text "empty"
         NilAbove d       -> (text "nilabove") <> semi <+> (prettyDoc d)
-        TextBeside s d   -> (text ("text \""++tdToStr (annotToTd s) ++ "\"" ++ show (annotSize s))) <> semi <+> (prettyDoc d)
+        TextBeside s d   -> (text ("text \"" `mappend` tdToStr (annotToTd s) `mappend` "\"" `mappend` show' (annotSize s))) <> semi <+> (prettyDoc d)
         Nest k d           -> text "nest" <+> integer (fromIntegral k) <> semi <+> prettyDoc d
         Union d1 d2        -> sep [text "union", parens (prettyDoc d1), parens (prettyDoc d2)]
         NoDoc              -> text "nodoc"
 
 -- TODO: map strategy for Docs to avoid code duplication
 -- Debug: Doc -> [Layout]
-flattenDoc :: Doc () -> [RDoc ()]
+flattenDoc :: Chars string => Doc string () -> [RDoc string ()]
 flattenDoc d = flatten (reduceDoc d) where
     flatten NoDoc = []
     flatten Empty = return Empty
@@ -866,7 +928,7 @@ flattenDoc d = flatten (reduceDoc d) where
     flatten (Beside d1 b d2) = error $ "flattenDoc Beside"
     flatten (Above d1 b d2) = error $ "flattenDoc Above"
   
-normalize :: Doc () -> RDoc ()
+normalize :: Chars string => Doc string () -> RDoc string ()
 normalize d = norm d where
     norm NoDoc = NoDoc
     norm Empty = Empty
@@ -888,7 +950,7 @@ normalize d = norm d where
     normUnion d1 (Nest _ _) = error$ "normUnion Nset "++topLevelCTor d1
     normUnion p1 p2  = Union p1 p2
 
-topLevelCTor :: Doc () -> String
+topLevelCTor :: Chars string => Doc string () -> String
 topLevelCTor d = tlc d where
     tlc NoDoc = "NoDoc"
     tlc Empty = "Empty"
@@ -900,7 +962,7 @@ topLevelCTor d = tlc d where
     tlc (Beside _ _ _) = "Beside"
     
 -- normalize TextBeside (and consequently apply some laws for simplification)
-mergeTexts :: RDoc () -> RDoc ()
+mergeTexts :: Chars string => RDoc string () -> RDoc string ()
 mergeTexts = merge where
     merge NoDoc = NoDoc
     merge Empty = Empty
@@ -910,17 +972,17 @@ mergeTexts = merge where
     merge (Nest k d) = Nest k (merge d)
     merge (Union d1 d2) = Union (merge d1) (merge d2)
     mergeText t1 t2 =
-      NoAnnot (Str $ tdToStr (annotToTd t1) ++ tdToStr (annotToTd t2))
+      NoAnnot (Str $ tdToStr (annotToTd t1) `mappend` tdToStr (annotToTd t2))
               (annotSize t1 + annotSize t2)
     
-isOneLiner :: RDoc () -> Bool
+isOneLiner :: Chars string => RDoc string () -> Bool
 isOneLiner = genericProp (&&) iol where
     iol (NilAbove _) = stop False
     iol (Union _ _)  = stop False
     iol  NoDoc = stop False
     iol _ = recurse True
 
-hasOneLiner :: RDoc () -> Bool
+hasOneLiner :: Chars string => RDoc string () -> Bool
 hasOneLiner = genericProp (&&) iol where
     iol (NilAbove _) = stop False
     iol (Union d1 _) = stop $ hasOneLiner d1
@@ -928,19 +990,19 @@ hasOneLiner = genericProp (&&) iol where
     iol _ = recurse True
 
 -- use elementwise concatenation as generic combinator
-extractTexts :: Doc () -> [String]
+extractTexts :: (Chars string, IsString string) => Doc string () -> [string]
 extractTexts = map normWS . genericProp combine go where
-    combine xs ys = [ a ++ b | a <- xs, b <- ys ]
+    combine xs ys = [ a `mappend` b | a <- xs, b <- ys ]
     go (TextBeside s _ )   = recurse [tdToStr (annotToTd s)]
-    go (Union d1 d2)       = stop $ extractTexts d1 ++ extractTexts d2
+    go (Union d1 d2)       = stop $ extractTexts d1 `mappend` extractTexts d2
     go NoDoc               = stop []
     go _ = recurse [""]
     -- modulo whitespace
-    normWS txt = filter (not . isWS) txt where
+    normWS txt = Chars.filter (not . isWS) txt where
         isWS ws | ws == ' ' || ws == '\n' || ws == '\t'  = True
                 | otherwise = False 
                 
-emptyReduction :: Doc () -> Doc ()
+emptyReduction :: string ~ Text => Doc string () -> Doc string ()
 emptyReduction doc = 
     case doc of
             Empty             -> Empty
@@ -952,7 +1014,7 @@ emptyReduction doc =
             Beside d1 _ d2    -> emptyReduction (reduceDoc doc)
             Above d1 _ d2     -> emptyReduction (reduceDoc doc)
 
-firstLineLength :: Doc () -> Int
+firstLineLength :: string ~ Text => Doc string () -> Int
 firstLineLength = genericProp (+) fll . reduceDoc where
     fll (NilAbove d) = stop 0
     fll (TextBeside s d) = recurse (annotSize s)
@@ -962,10 +1024,10 @@ firstLineLength = genericProp (+) fll . reduceDoc where
     fll (Beside _ _ _) = error "Beside"
     fll _ = (0,True)
 
-abstractLayout :: Doc () -> [(Int,String)]
+abstractLayout :: forall string. string ~ Text => Doc string () -> [(Int,string)]
 abstractLayout d = cal 0 Nothing (reduceDoc d) where
     --   current column -> this line -> doc -> [(indent,line)]
-    cal :: Int -> (Maybe (Int,String)) -> Doc () -> [(Int,String)]
+    cal :: Int -> (Maybe (Int,string)) -> Doc string () -> [(Int,string)]
     cal k cur Empty = [ addTextEOL k (Str "") cur ]    
     cal k cur (NilAbove d) = (addTextEOL k (Str "") cur) : cal k Nothing d
     cal k cur (TextBeside s d) = cal (k + annotSize s) (addText k s cur) d
@@ -975,24 +1037,24 @@ abstractLayout d = cal 0 Nothing (reduceDoc d) where
     cal _ _ (Above _ _ _) = error "Above"
     cal _ _ (Beside _ _ _) = error "Beside"
     addTextEOL k str Nothing = (k,tdToStr str)
-    addTextEOL _ str (Just (k,pre)) = (k,pre++ tdToStr str)
+    addTextEOL _ str (Just (k,pre)) = (k,pre `mappend` tdToStr str)
     addText k str = Just . addTextEOL k (annotToTd str)
 
-docifyLayout :: [(Int,String)] -> Doc ()
+docifyLayout :: string ~ Text => [(Int,string)] -> Doc string ()
 docifyLayout = vcat . map (\(k,t) -> nest k (text t))
     
-oneLineRender :: Doc () -> String
+oneLineRender :: string ~ Text => Doc string () -> string
 oneLineRender = olr . abstractLayout . last . flattenDoc where
-    olr = concat . intersperse " " . map snd
+    olr = mconcat . intersperse " " . map snd
 
 -- because of invariant 4, we do not have to expand to layouts here
 -- but it is easier, so for now we use abstractLayout
-firstLineIsLeftMost :: Doc () -> Bool
+firstLineIsLeftMost :: string ~ Text => Doc string () -> Bool
 firstLineIsLeftMost = all (firstIsLeftMost . abstractLayout) . flattenDoc where
     firstIsLeftMost ((k,_):xs@(_:_)) = all ( (>= k) . fst) xs
     firstIsLeftMost _ = True
 
-noNegativeIndent :: Doc () -> Bool
+noNegativeIndent :: string ~ Text => Doc string () -> Bool
 noNegativeIndent = all (noNegIndent . abstractLayout) . flattenDoc where
     noNegIndent = all ( (>= 0) . fst)
     

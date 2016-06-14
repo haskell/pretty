@@ -1,14 +1,16 @@
+{-# LANGUAGE OverloadedStrings #-}
 module UnitT3911 where
 
 import Text.PrettyPrint.HughesPJ
+import Data.Text as Text hiding (empty, foldr)
 
 import TestUtils
 
-xs :: [Doc]
+xs :: [Doc Text]
 xs = [text "hello",
       nest 10 (text "world")]
 
-d1, d2, d3 :: Doc
+d1, d2, d3 :: Doc Text
 d1 = vcat xs
 d2 = foldr ($$) empty xs
 d3 = foldr ($+$) empty xs

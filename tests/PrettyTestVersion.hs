@@ -1,5 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
 #if __GLASGOW_HASKELL__ >= 701
 {-# LANGUAGE DeriveGeneric #-}
 #endif

@@ -39,6 +39,7 @@ Library
         Text.PrettyPrint.Annotated
         Text.PrettyPrint.Annotated.HughesPJ
         Text.PrettyPrint.Annotated.HughesPJClass
+        Text.PrettyPrint.String
     build-depends: base >= 4.5 && < 5,
                    deepseq >= 1.1,
                    ghc-prim
@@ -48,22 +49,24 @@ Library
 Test-Suite test-pretty
     type: exitcode-stdio-1.0
     hs-source-dirs: tests
-                    src
     build-depends: base >= 4.5 && < 5,
                    deepseq >= 1.1,
                    ghc-prim,
-                   QuickCheck >= 2.5 && <3
+                   pretty,
+                   QuickCheck >= 2.5 && <3,
+                   text
     main-is: Test.hs
     other-modules:
         PrettyTestVersion
         TestGenerators
         TestStructures
         TestUtils
+        Text
         UnitLargeDoc
         UnitPP1
         UnitT3911
         UnitT32
-    extensions: CPP, BangPatterns, DeriveGeneric
+    extensions: CPP, BangPatterns, DeriveGeneric, FlexibleContexts
     include-dirs: src/Text/PrettyPrint/Annotated
     ghc-options: -rtsopts -with-rtsopts=-K2M
 

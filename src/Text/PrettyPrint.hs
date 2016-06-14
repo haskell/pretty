@@ -1,6 +1,3 @@
-#if __GLASGOW_HASKELL__ >= 701
-{-# LANGUAGE Safe #-}
-#endif
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Text.PrettyPrint
@@ -63,9 +60,9 @@ module Text.PrettyPrint (
 
         -- ** General rendering
         fullRender,
-        Mode(..), TextDetails(..)
+        Mode(..), TextDetails
 
     ) where
 
-import Text.PrettyPrint.HughesPJ
+import Text.PrettyPrint.String
 

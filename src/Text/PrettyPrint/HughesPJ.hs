@@ -3,6 +3,9 @@
 {-# LANGUAGE Safe #-}
 {-# LANGUAGE DeriveGeneric #-}
 #endif
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -32,7 +35,7 @@
 module Text.PrettyPrint.HughesPJ (
 
         -- * The document type
-        Doc, TextDetails(..),
+        Chars(..), Doc, TextDetails(..),
 
         -- * Constructing documents
 
@@ -81,7 +84,7 @@ module Text.PrettyPrint.HughesPJ (
 #endif
 
 import           Text.PrettyPrint.Annotated.HughesPJ
-                     ( TextDetails(..), Mode(..), Style(..), style )
+                     ( Chars(..), TextDetails(..), Mode(..), Style(..), style )
 import qualified Text.PrettyPrint.Annotated.HughesPJ as Ann
 
 import Control.DeepSeq ( NFData(rnf) )
@@ -108,17 +111,17 @@ infixl 5 $$, $+$
 
 -- | The abstract type of documents. A Doc represents a /set/ of layouts. A
 -- Doc with no occurrences of Union or NoDoc represents just one layout.
-newtype Doc = Doc (Ann.Doc ())
+newtype Doc string = Doc (Ann.Doc string ())
 #if __GLASGOW_HASKELL__ >= 701
                     deriving (Generic)
 #endif
 
-liftList :: ([Ann.Doc ()] -> Ann.Doc ()) -> ([Doc] -> Doc)
+liftList :: ([Ann.Doc string ()] -> Ann.Doc string ()) -> ([Doc string] -> Doc string)
 liftList f ds = Doc (f [ d | Doc d <- ds ])
 {-# INLINE liftList #-}
 
-liftBinary :: (Ann.Doc () -> Ann.Doc () -> Ann.Doc ())
-           -> (    Doc    ->     Doc    ->     Doc   )
+liftBinary :: (Ann.Doc string () -> Ann.Doc string () -> Ann.Doc string ())
+           -> (    Doc string    ->     Doc string   ->     Doc string   )
 liftBinary f (Doc a) (Doc b) = Doc (f a b)
 {-# INLINE liftBinary #-}
 
@@ -135,30 +138,31 @@ instance Monoid Doc where
     mempty  = empty
     mappend = (Semi.<>)
 #else
-instance Monoid Doc where
+instance Chars string => Monoid (Doc string) where
     mempty  = empty
     mappend = (<>)
 #endif
 
-instance IsString Doc where
-    fromString = text
+instance Chars string => IsString (Doc string) where
+    fromString = text . fromString
 
-instance Show Doc where
-  showsPrec _ doc cont = fullRender (mode style) (lineLength style)
+instance Chars string => Show (Doc string) where
+  showsPrec _ doc cont =
+             toString $ fullRender (mode style) (lineLength style)
                                     (ribbonsPerLine style)
-                                    txtPrinter cont doc
+                                    txtPrinter (fromString cont) doc
 
-instance Eq Doc where
+instance (Chars string, Eq string) => Eq (Doc string) where
   (==) = (==) `on` render
 
-instance NFData Doc where
+instance Chars string => NFData (Doc string) where
   rnf (Doc a) = rnf a
 
 -- ---------------------------------------------------------------------------
 -- Values and Predicates on GDocs and TextDetails
 
 -- | A document of height and width 1, containing a literal character.
-char :: Char -> Doc
+char :: Chars string => Char -> Doc string
 char c = Doc (Ann.char c)
 {-# INLINE char #-}
 
@@ -171,45 +175,45 @@ char c = Doc (Ann.char c)
 --
 -- The side condition on the last law is necessary because @'text' \"\"@
 -- has height 1, while 'empty' has no height.
-text :: String -> Doc
+text :: Chars string => string -> Doc string
 text s = Doc (Ann.text s)
 {-# INLINE text #-}
 
 -- | Same as @text@. Used to be used for Bytestrings.
-ptext :: String -> Doc
+ptext :: Chars string => string -> Doc string
 ptext s = Doc (Ann.ptext s)
 {-# INLINE ptext #-}
 
 -- | Some text with any width. (@text s = sizedText (length s) s@)
-sizedText :: Int -> String -> Doc
+sizedText :: Chars string => Int -> string -> Doc string
 sizedText l s = Doc (Ann.sizedText l s)
 
 -- | Some text, but without any width. Use for non-printing text
 -- such as a HTML or Latex tags
-zeroWidthText :: String -> Doc
+zeroWidthText :: Chars string => string -> Doc string
 zeroWidthText = sizedText 0
 
 -- | The empty document, with no height and no width.
 -- 'empty' is the identity for '<>', '<+>', '$$' and '$+$', and anywhere
 -- in the argument list for 'sep', 'hcat', 'hsep', 'vcat', 'fcat' etc.
-empty :: Doc
+empty :: Doc string
 empty = Doc Ann.empty
 
 -- | Returns 'True' if the document is empty
-isEmpty :: Doc -> Bool
+isEmpty :: Doc string -> Bool
 isEmpty (Doc d) = Ann.isEmpty d
 
-semi   :: Doc -- ^ A ';' character
-comma  :: Doc -- ^ A ',' character
-colon  :: Doc -- ^ A ':' character
-space  :: Doc -- ^ A space character
-equals :: Doc -- ^ A '=' character
-lparen :: Doc -- ^ A '(' character
-rparen :: Doc -- ^ A ')' character
-lbrack :: Doc -- ^ A '[' character
-rbrack :: Doc -- ^ A ']' character
-lbrace :: Doc -- ^ A '{' character
-rbrace :: Doc -- ^ A '}' character
+semi   :: Chars string => Doc string -- ^ A ';' character
+comma  :: Chars string => Doc string -- ^ A ',' character
+colon  :: Chars string => Doc string -- ^ A ':' character
+space  :: Chars string => Doc string -- ^ A space character
+equals :: Chars string => Doc string -- ^ A '=' character
+lparen :: Chars string => Doc string -- ^ A '(' character
+rparen :: Chars string => Doc string -- ^ A ')' character
+lbrack :: Chars string => Doc string -- ^ A '[' character
+rbrack :: Chars string => Doc string -- ^ A ']' character
+lbrace :: Chars string => Doc string -- ^ A '{' character
+rbrace :: Chars string => Doc string -- ^ A '}' character
 semi   = char ';'
 comma  = char ','
 colon  = char ':'
@@ -222,22 +226,22 @@ rbrack = char ']'
 lbrace = char '{'
 rbrace = char '}'
 
-int      :: Int      -> Doc -- ^ @int n = text (show n)@
-integer  :: Integer  -> Doc -- ^ @integer n = text (show n)@
-float    :: Float    -> Doc -- ^ @float n = text (show n)@
-double   :: Double   -> Doc -- ^ @double n = text (show n)@
-rational :: Rational -> Doc -- ^ @rational n = text (show n)@
-int      n = text (show n)
-integer  n = text (show n)
-float    n = text (show n)
-double   n = text (show n)
-rational n = text (show n)
+int      :: Chars string => Int      -> Doc string -- ^ @int n = text (show n)@
+integer  :: Chars string => Integer  -> Doc string -- ^ @integer n = text (show n)@
+float    :: Chars string => Float    -> Doc string -- ^ @float n = text (show n)@
+double   :: Chars string => Double   -> Doc string -- ^ @double n = text (show n)@
+rational :: Chars string => Rational -> Doc string -- ^ @rational n = text (show n)@
+int      n = text (fromString (show n))
+integer  n = text (fromString (show n))
+float    n = text (fromString (show n))
+double   n = text (fromString (show n))
+rational n = text (fromString (show n))
 
-parens       :: Doc -> Doc -- ^ Wrap document in @(...)@
-brackets     :: Doc -> Doc -- ^ Wrap document in @[...]@
-braces       :: Doc -> Doc -- ^ Wrap document in @{...}@
-quotes       :: Doc -> Doc -- ^ Wrap document in @\'...\'@
-doubleQuotes :: Doc -> Doc -- ^ Wrap document in @\"...\"@
+parens       :: Chars string => Doc string -> Doc string -- ^ Wrap document in @(...)@
+brackets     :: Chars string => Doc string -> Doc string -- ^ Wrap document in @[...]@
+braces       :: Chars string => Doc string -> Doc string -- ^ Wrap document in @{...}@
+quotes       :: Chars string => Doc string -> Doc string -- ^ Wrap document in @\'...\'@
+doubleQuotes :: Chars string => Doc string -> Doc string -- ^ Wrap document in @\"...\"@
 quotes p       = char '\'' <> p <> char '\''
 doubleQuotes p = char '"' <> p <> char '"'
 parens p       = char '(' <> p <> char ')'
@@ -245,27 +249,27 @@ brackets p     = char '[' <> p <> char ']'
 braces p       = char '{' <> p <> char '}'
 
 -- | Apply 'parens' to 'Doc' if boolean is true.
-maybeParens :: Bool -> Doc -> Doc
+maybeParens :: Chars string => Bool -> Doc string -> Doc string
 maybeParens False = id
 maybeParens True = parens
 
 -- | Apply 'brackets' to 'Doc' if boolean is true.
-maybeBrackets :: Bool -> Doc -> Doc
+maybeBrackets :: Chars string => Bool -> Doc string -> Doc string
 maybeBrackets False = id
 maybeBrackets True = brackets
 
 -- | Apply 'braces' to 'Doc' if boolean is true.
-maybeBraces :: Bool -> Doc -> Doc
+maybeBraces :: Chars string => Bool -> Doc string -> Doc string
 maybeBraces False = id
 maybeBraces True = braces
 
 -- | Apply 'quotes' to 'Doc' if boolean is true.
-maybeQuotes :: Bool -> Doc -> Doc
+maybeQuotes :: Chars string => Bool -> Doc string -> Doc string
 maybeQuotes False = id
 maybeQuotes True = quotes
 
 -- | Apply 'doubleQuotes' to 'Doc' if boolean is true.
-maybeDoubleQuotes :: Bool -> Doc -> Doc
+maybeDoubleQuotes :: Chars string => Bool -> Doc string -> Doc string
 maybeDoubleQuotes False = id
 maybeDoubleQuotes True = doubleQuotes
 
@@ -273,22 +277,22 @@ maybeDoubleQuotes True = doubleQuotes
 -- Structural operations on GDocs
 
 -- | Perform some simplification of a built up @GDoc@.
-reduceDoc :: Doc -> RDoc
+reduceDoc :: Chars string => Doc string -> RDoc string
 reduceDoc (Doc d) = Doc (Ann.reduceDoc d)
 {-# INLINE reduceDoc #-}
 
 -- | List version of '<>'.
-hcat :: [Doc] -> Doc
+hcat :: Chars string => [Doc string] -> Doc string
 hcat = liftList Ann.hcat
 {-# INLINE hcat #-}
 
 -- | List version of '<+>'.
-hsep :: [Doc] -> Doc
+hsep :: Chars string => [Doc string] -> Doc string
 hsep = liftList Ann.hsep
 {-# INLINE hsep #-}
 
 -- | List version of '$$'.
-vcat :: [Doc] -> Doc
+vcat :: Chars string => [Doc string] -> Doc string
 vcat = liftList Ann.vcat
 {-# INLINE vcat #-}
 
@@ -309,17 +313,17 @@ vcat = liftList Ann.vcat
 --
 -- The side condition on the last law is needed because
 -- 'empty' is a left identity for '<>'.
-nest :: Int -> Doc -> Doc
+nest :: Chars string => Int -> Doc string -> Doc string
 nest k (Doc p) = Doc (Ann.nest k p)
 {-# INLINE nest #-}
 
 -- | @hang d1 n d2 = sep [d1, nest n d2]@
-hang :: Doc -> Int -> Doc -> Doc
+hang :: Chars string => Doc string -> Int -> Doc string -> Doc string
 hang (Doc d1) n (Doc d2) = Doc (Ann.hang d1 n d2)
 {-# INLINE hang #-}
 
 -- | @punctuate p [d1, ... dn] = [d1 \<> p, d2 \<> p, ... dn-1 \<> p, dn]@
-punctuate :: Doc -> [Doc] -> [Doc]
+punctuate :: Chars string => Doc string -> [Doc string] -> [Doc string]
 punctuate (Doc p) ds = [ Doc d | d <- Ann.punctuate p [ d | Doc d <- ds ] ]
 {-# INLINE punctuate #-}
 
@@ -346,13 +350,13 @@ punctuate (Doc p) ds = [ Doc d | d <- Ann.punctuate p [ d | Doc d <- ds ] ]
 --
 -- * @(x '$$' y) '<>' z = x '$$' (y '<>' z)@, if @y@ non-empty.
 --
-($$) :: Doc -> Doc -> Doc
+($$) :: Chars string => Doc string -> Doc string -> Doc string
 ($$) = liftBinary (Ann.$$)
 {-# INLINE ($$) #-}
 
 -- | Above, with no overlapping.
 -- '$+$' is associative, with identity 'empty'.
-($+$) :: Doc -> Doc -> Doc
+($+$) :: Chars string => Doc string -> Doc string -> Doc string
 ($+$) = liftBinary (Ann.$+$)
 {-# INLINE ($+$) #-}
 
@@ -366,13 +370,13 @@ punctuate (Doc p) ds = [ Doc d | d <- Ann.punctuate p [ d | Doc d <- ds ] ]
 
 -- | Beside.
 -- '<>' is associative, with identity 'empty'.
-(<>) :: Doc -> Doc -> Doc
+(<>) :: Chars string => Doc string -> Doc string -> Doc string
 (<>) = liftBinary (Ann.<>)
 {-# INLINE (<>) #-}
 
 -- | Beside, separated by space, unless one of the arguments is 'empty'.
 -- '<+>' is associative, with identity 'empty'.
-(<+>) :: Doc -> Doc -> Doc
+(<+>) :: Chars string => Doc string -> Doc string -> Doc string
 (<+>) = liftBinary (Ann.<+>)
 {-# INLINE (<+>) #-}
 
@@ -385,12 +389,12 @@ punctuate (Doc p) ds = [ Doc d | d <- Ann.punctuate p [ d | Doc d <- ds ] ]
 --                          vcat ps
 
 -- | Either 'hsep' or 'vcat'.
-sep  :: [Doc] -> Doc
+sep  :: Chars string => [Doc string] -> Doc string
 sep  = liftList Ann.sep
 {-# INLINE sep #-}
 
 -- | Either 'hcat' or 'vcat'.
-cat :: [Doc] -> Doc
+cat :: Chars string => [Doc string] -> Doc string
 cat = liftList Ann.cat
 {-# INLINE cat #-}
 
@@ -399,12 +403,12 @@ cat = liftList Ann.cat
 -- @fill@
 
 -- | \"Paragraph fill\" version of 'cat'.
-fcat :: [Doc] -> Doc
+fcat :: Chars string => [Doc string] -> Doc string
 fcat = liftList Ann.fcat
 {-# INLINE fcat #-}
 
 -- | \"Paragraph fill\" version of 'sep'.
-fsep :: [Doc] -> Doc
+fsep :: Chars string => [Doc string] -> Doc string
 fsep = liftList Ann.fsep
 {-# INLINE fsep #-}
 
@@ -413,7 +417,7 @@ fsep = liftList Ann.fsep
 -- Selecting the best layout
 
 -- | @first@ returns its first argument if it is non-empty, otherwise its second.
-first :: Doc -> Doc -> Doc
+first :: Chars string => Doc string -> Doc string -> Doc string
 first  = liftBinary Ann.first
 {-# INLINE first #-}
 
@@ -422,31 +426,32 @@ first  = liftBinary Ann.first
 -- Rendering
 
 -- | Render the @Doc@ to a String using the default @Style@ (see 'style').
-render :: Doc -> String
+render :: Chars string => Doc string -> string
 render = fullRender (mode style) (lineLength style) (ribbonsPerLine style)
-                    txtPrinter ""
+                    txtPrinter mempty
 {-# INLINE render #-}
 
 -- | Render the @Doc@ to a String using the given @Style@.
-renderStyle :: Style -> Doc -> String
+renderStyle :: Chars string => Style -> Doc string -> string
 renderStyle s = fullRender (mode s) (lineLength s) (ribbonsPerLine s)
-                txtPrinter ""
+                txtPrinter mempty
 {-# INLINE renderStyle #-}
 
 -- | Default TextDetails printer.
-txtPrinter :: TextDetails -> String -> String
-txtPrinter (Chr c)   s  = c:s
-txtPrinter (Str s1)  s2 = s1 ++ s2
-txtPrinter (PStr s1) s2 = s1 ++ s2
+txtPrinter :: Chars string => TextDetails string -> string -> string
+txtPrinter (Chr c)   s  = cons c s
+txtPrinter (Str s1)  s2 = s1 `mappend` s2
+txtPrinter (PStr s1) s2 = s1 `mappend` s2
 
 -- | The general rendering interface. Please refer to the @Style@ and @Mode@
 -- types for a description of rendering mode, line length and ribbons.
-fullRender :: Mode                     -- ^ Rendering mode.
+fullRender :: Chars string
+           => Mode                     -- ^ Rendering mode.
            -> Int                      -- ^ Line length.
            -> Float                    -- ^ Ribbons per line.
-           -> (TextDetails -> a -> a)  -- ^ What to do with text.
+           -> (TextDetails string -> a -> a)  -- ^ What to do with text.
            -> a                        -- ^ What to do at the end.
-           -> Doc                      -- ^ The document.
+           -> Doc string                      -- ^ The document.
            -> a                        -- ^ Result.
 fullRender m lineLen ribbons txt rest (Doc doc)
   = Ann.fullRender m lineLen ribbons txt rest doc
