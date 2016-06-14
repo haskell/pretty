@@ -8,7 +8,11 @@ env:
   - CABALVER=1.20 GHCVER=7.8.1
   - CABALVER=1.20 GHCVER=7.8.2
   - CABALVER=1.20 GHCVER=7.8.3
-  - CABALVER=1.20 GHCVER=7.8.3
+  - CABALVER=1.22 GHCVER=7.10.1
+  - CABALVER=1.22 GHCVER=7.10.2
+  - CABALVER=1.22 GHCVER=7.10.3
+  - CABALVER=1.24 GHCVER=8.0.1
+  - CABALVER=1.24 GHCVER=8.0.2
   - CABALVER=head GHCVER=head
 
 matrix:
@@ -29,6 +33,7 @@ install:
 script:
  - cabal install --only-dependencies
  - cabal install "QuickCheck >= 2.5 && < 3"
+ - cabal install text
  - cabal configure -v2 --enable-tests
  - cabal build
  - cabal check

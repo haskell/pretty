@@ -17,6 +17,9 @@ module TestStructures (
 import PrettyTestVersion
 import qualified Data.Text as Text
 import Data.String (fromString)
+#if __GLASGOW_HASKELL__ < 709
+import Data.Monoid ( Monoid(mempty)  )
+#endif
 
 data CDoc string =
             CEmpty           -- empty

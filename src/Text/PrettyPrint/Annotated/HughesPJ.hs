@@ -298,14 +298,14 @@ data TextDetails string
 
 -- Combining @Doc@ values
 #if __GLASGOW_HASKELL__ >= 800
-instance Semi.Semigroup (Doc string a) where
+instance Chars string => Semi.Semigroup (Doc string a) where
 #ifndef TESTING
     (<>) = (Text.PrettyPrint.Annotated.HughesPJ.<>)
 #else
     (<>) = (PrettyTestVersion.<>)
 #endif
 
-instance Monoid (Doc string a) where
+instance Chars string => Monoid (Doc string a) where
     mempty  = empty
     mappend = (Semi.<>)
 #else
@@ -563,7 +563,7 @@ hang :: Chars string => Doc string a -> Int -> Doc string a -> Doc string a
 hang d1 n d2 = sep [d1, nest n d2]
 
 -- | @punctuate p [d1, ... dn] = [d1 \<> p, d2 \<> p, ... dn-1 \<> p, dn]@
-punctuate :: Chars string => Doc string a -> [Doc string a] -> [Doc string a]
+punctuate :: Doc string a -> [Doc string a] -> [Doc string a]
 punctuate _ []     = []
 punctuate p (x:xs) = go x xs
                    where go y []     = [y]
@@ -594,7 +594,7 @@ reduceVert (Above  p g q) = eliminateEmpty Above  (snd (reduceVert p)) g (reduce
 reduceVert doc            = (NotEmpty, doc)
 
 {-# INLINE eliminateEmpty #-}
-eliminateEmpty :: Chars string =>
+eliminateEmpty ::
   (Doc string a -> Bool -> Doc string a -> Doc string a) ->
   Doc string a -> Bool -> (IsEmpty, Doc string a) -> (IsEmpty, Doc string a)
 eliminateEmpty _    Empty _ q          = q
@@ -611,17 +611,17 @@ eliminateEmpty constr p     g q          =
      (NotEmpty, q') -> constr p g q'
      (IsEmpty, _) -> p)
 
-nilAbove_ :: Chars string => RDoc string a -> RDoc string a
+nilAbove_ :: RDoc string a -> RDoc string a
 nilAbove_ = NilAbove
 
 -- | Arg of a TextBeside is always an RDoc.
-textBeside_ :: Chars string => AnnotDetails string a -> RDoc string a -> RDoc string a
+textBeside_ :: AnnotDetails string a -> RDoc string a -> RDoc string a
 textBeside_  = TextBeside
 
-nest_ :: Chars string => Int -> RDoc string a -> RDoc string a
+nest_ :: Int -> RDoc string a -> RDoc string a
 nest_ = Nest
 
-union_ :: Chars string => RDoc string a -> RDoc string a -> RDoc string a
+union_ :: RDoc string a -> RDoc string a -> RDoc string a
 union_ = Union
 
 

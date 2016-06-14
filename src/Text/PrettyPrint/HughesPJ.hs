@@ -131,10 +131,10 @@ type RDoc = Doc
 
 -- Combining @Doc@ values
 #if __GLASGOW_HASKELL__ >= 800
-instance Semi.Semigroup Doc where
+instance Chars string => Semi.Semigroup (Doc string) where
     (<>) = (Text.PrettyPrint.HughesPJ.<>)
 
-instance Monoid Doc where
+instance Chars string => Monoid (Doc string) where
     mempty  = empty
     mappend = (Semi.<>)
 #else

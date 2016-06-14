@@ -32,6 +32,9 @@ import UnitT32
 import Control.Monad
 import Data.Char (isSpace)
 import Data.List (intersperse)
+#if __GLASGOW_HASKELL__ < 709
+import Data.Monoid ( Monoid(mappend, mconcat) )
+#endif
 import Data.String (IsString(fromString))
 import Data.Text (Text)
 import qualified Data.Text as Text
