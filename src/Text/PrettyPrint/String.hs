@@ -68,101 +68,101 @@ module Text.PrettyPrint.String (
 
     ) where
 
-import qualified Text.PrettyPrint.Annotated.HughesPJ as PP
+import qualified Text.PrettyPrint.HughesPJ as PP
 
-type Doc a = PP.Doc String a
+type Doc = PP.Doc String
 
 {-
 char :: Char -> Doc a
 char = PP.char
 -}
-text :: String -> Doc a
+text :: String -> Doc
 text = PP.text
-ptext :: String -> Doc a
+ptext :: String -> Doc
 ptext = PP.ptext
-sizedText :: Int -> String -> Doc a
+sizedText :: Int -> String -> Doc
 sizedText = PP.sizedText
-zeroWidthText :: String -> Doc a
+zeroWidthText :: String -> Doc
 zeroWidthText = PP.zeroWidthText
 {-
-int :: Int -> Doc a
+int :: Int -> Doc
 int = PP.int
-integer :: Integer -> Doc a
+integer :: Integer -> Doc
 integer = PP.integer
-float :: Float -> Doc a
+float :: Float -> Doc
 float = PP.float
-double :: Double -> Doc a
+double :: Double -> Doc
 double = PP.double
-rational :: Rational -> Doc a
+rational :: Rational -> Doc
 rational = PP.rational
-semi :: Doc a
+semi :: Doc
 semi = PP.semi
-comma :: Doc a
+comma :: Doc
 comma = PP.comma
-colon :: Doc a
+colon :: Doc
 colon = PP.colon
-space :: Doc a
+space :: Doc
 space = PP.space
-equals :: Doc a
+equals :: Doc
 equals = PP.equals
-lparen :: Doc a
+lparen :: Doc
 lparen = PP.lparen
-rparen :: Doc a
+rparen :: Doc
 rparen = PP.rparen
-lbrack :: Doc a
+lbrack :: Doc
 lbrack = PP.lbrack
-rbrack :: Doc a
+rbrack :: Doc
 rbrack = PP.rbrack
-lbrace :: Doc a
+lbrace :: Doc
 lbrace = PP.lbrace
-rbrace :: Doc a
+rbrace :: Doc
 rbrace = PP.rbrace
-parens :: Doc a -> Doc a
+parens :: Doc -> Doc
 parens = PP.parens
-brackets :: Doc a -> Doc a
+brackets :: Doc -> Doc
 brackets = PP.brackets
-braces :: Doc a -> Doc a
+braces :: Doc -> Doc
 braces = PP.braces
-quotes :: Doc a -> Doc a
+quotes :: Doc -> Doc
 quotes = PP.quotes
-doubleQuotes :: Doc a -> Doc a
+doubleQuotes :: Doc -> Doc
 doubleQuotes = PP.doubleQuotes
-empty :: Doc a
+empty :: Doc
 empty = PP.empty
-(<>) :: Doc a -> Doc a -> Doc a
+(<>) :: Doc -> Doc -> Doc
 (<>) = (PP.<>)
-(<+>) :: Doc a -> Doc a -> Doc a
+(<+>) :: Doc -> Doc -> Doc
 (<+>) = (PP.<+>)
-hcat :: [Doc a] -> Doc a
+hcat :: [Doc] -> Doc
 hcat = PP.hcat
-hsep :: [Doc a] -> Doc a
+hsep :: [Doc] -> Doc
 hsep = PP.hsep
-($$) :: Doc a -> Doc a -> Doc a
+($$) :: Doc -> Doc -> Doc
 ($$) = (PP.$$)
-($+$) :: Doc a -> Doc a -> Doc a
+($+$) :: Doc -> Doc -> Doc
 ($+$) = (PP.$+$)
-vcat :: [Doc a] -> Doc a
+vcat :: [Doc] -> Doc
 vcat = PP.vcat
-sep :: [Doc a] -> Doc a
+sep :: [Doc] -> Doc
 sep = PP.sep
-cat :: [Doc a] -> Doc a
+cat :: [Doc] -> Doc
 cat = PP.cat
-fsep :: [Doc a] -> Doc a
+fsep :: [Doc] -> Doc
 fsep = PP.fsep
-fcat :: [Doc a] -> Doc a
+fcat :: [Doc] -> Doc
 fcat = PP.fcat
-nest :: Int -> Doc a -> Doc a
+nest :: Int -> Doc -> Doc
 nest = PP.nest
-hang :: Doc a -> Int -> Doc a -> Doc a
+hang :: Doc -> Int -> Doc -> Doc
 hang = PP.hang
-punctuate :: Doc a -> [Doc a] -> [Doc a]
+punctuate :: Doc -> [Doc] -> [Doc]
 punctuate = PP.punctuate
-isEmpty :: Doc a -> Bool
+isEmpty :: Doc -> Bool
 isEmpty = PP.isEmpty
 -}
-render :: Doc a -> String
+render :: Doc -> String
 render = PP.render
-renderStyle :: PP.Style -> Doc a -> String
+renderStyle :: PP.Style -> Doc -> String
 renderStyle = PP.renderStyle
 {-
 fullRender :: PP.Mode -> Int -> Float -> (TextDetails -> a -> a) -> a -> Doc b -> a
