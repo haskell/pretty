@@ -9,18 +9,6 @@ import Data.Text as Text
 import Data.Text.IO as Text
 import Text.PrettyPrint.Annotated.HughesPJ (Chars(..))
 
-instance Chars Text where
-    cons = Text.cons
-    snoc s c = Text.append s (Text.singleton c)
-    length = Text.length
-    toString = unpack
-    putStr = Text.putStr
-    putStrLn = Text.putStrLn
-    filter = Text.filter
-    lines = Text.lines
-    unlines = Text.unlines
-    map = Text.map
-
 simpleMatch :: String -> String -> String -> IO ()
 simpleMatch test expected actual =
   when (actual /= expected) $ do

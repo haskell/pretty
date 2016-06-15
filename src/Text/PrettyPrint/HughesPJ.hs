@@ -35,7 +35,7 @@
 module Text.PrettyPrint.HughesPJ (
 
         -- * The document type
-        Chars(..), Doc, TextDetails(..),
+        Chars, Doc, TextDetails(..),
 
         -- * Constructing documents
 
@@ -84,7 +84,7 @@ module Text.PrettyPrint.HughesPJ (
 #endif
 
 import           Text.PrettyPrint.Annotated.HughesPJ
-                     ( Chars(..), TextDetails(..), Mode(..), Style(..), style )
+                     ( Chars, TextDetails(..), Mode(..), Style(..), style )
 import qualified Text.PrettyPrint.Annotated.HughesPJ as Ann
 
 import Control.DeepSeq ( NFData(rnf) )
@@ -95,6 +95,7 @@ import qualified Data.Semigroup as Semi ( Semigroup((<>)) )
 import Data.Monoid     ( Monoid(mempty, mappend)  )
 #endif
 import Data.String     ( IsString(fromString) )
+import Data.ListLike (toList, cons)
 
 import GHC.Generics
 
@@ -148,7 +149,7 @@ instance Chars string => IsString (Doc string) where
 
 instance Chars string => Show (Doc string) where
   showsPrec _ doc cont =
-             toString $ fullRender (mode style) (lineLength style)
+             toList $ fullRender (mode style) (lineLength style)
                                     (ribbonsPerLine style)
                                     txtPrinter (fromString cont) doc
 

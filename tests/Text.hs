@@ -68,18 +68,6 @@ import qualified Text.PrettyPrint.Annotated.HughesPJ as PP
 import Data.Text as Text
 import Data.Text.IO as Text
 
-instance PP.Chars Text where
-    cons = Text.cons
-    snoc s c = Text.append s (Text.singleton c)
-    length = Text.length
-    toString = Text.unpack
-    putStr = Text.putStr
-    putStrLn = Text.putStrLn
-    filter = Text.filter
-    lines = Text.lines
-    unlines = Text.unlines
-    map = Text.map
-
 type Doc a = PP.Doc Text a
 
 text :: Text -> Doc a

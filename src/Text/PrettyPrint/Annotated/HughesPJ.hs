@@ -30,7 +30,7 @@
 module Text.PrettyPrint.Annotated.HughesPJ (
 
         -- * The document type
-        Chars(..), Doc, TextDetails(..), AnnotDetails(..),
+        Chars, Doc, TextDetails(..), AnnotDetails(..),
 
         -- * Constructing documents
 
@@ -95,38 +95,22 @@ import qualified Data.Semigroup as Semi ( Semigroup((<>)) )
 import Data.Monoid     ( Monoid(mempty, mappend)  )
 #endif
 import Data.String     ( IsString(fromString) )
+import Data.ListLike   (ListLike, ListLikeIO, toString, length, cons, fromList, StringLike)
+import Data.Text as Strict (Text)
+import Data.Text.Lazy as Lazy (Text)
 
 import GHC.Generics
 import Prelude hiding (length)
-import qualified Prelude
 
--- | A class which includes only the operations on strings required by
--- pretty.  This class is a subset of ListLike, which is not used
--- because it conflicts with the Safe extension.  No other instanaces
--- are defined here for the same reason.
-class (Monoid string, IsString string, Eq string, Ord string, NFData string) => Chars string where
-    cons :: Char -> string -> string
-    snoc :: string -> Char -> string
-    length :: string -> Int
-    toString :: string -> String
-    putStr :: string -> IO ()
-    putStrLn :: string -> IO ()
-    filter :: (Char -> Bool) -> string -> string
-    lines :: string -> [string]
-    unlines :: [string] -> string
-    map :: (Char -> Char) -> string -> string
+--- | A class which includes only the operations on strings required by
+--- pretty.  This class is a subset of ListLike, which is not used
+--- because it conflicts with the Safe extension.  No other instanaces
+--- are defined here for the same reason.
+class (ListLike string Char, ListLikeIO string Char, IsString string, StringLike string, NFData string, Eq string) => Chars string
 
-instance Chars String where
-    cons = (:)
-    snoc s c = mappend s [c]
-    length = Prelude.length
-    toString = id
-    putStr = Prelude.putStr
-    putStrLn = Prelude.putStrLn
-    filter = Prelude.filter
-    lines = Prelude.lines
-    unlines = Prelude.unlines
-    map = fmap
+instance Chars String
+instance Chars Strict.Text
+instance Chars Lazy.Text
 
 -- ---------------------------------------------------------------------------
 -- The Doc calculus
@@ -315,13 +299,13 @@ instance Monoid (Doc string a) where
 #endif
 
 instance Chars string => IsString (Doc string a) where
-    fromString = text . fromString
+    fromString = text . fromList
 
 instance Chars string => Show (Doc string a) where
   showsPrec _ doc cont =
              toString $ fullRender (mode style) (lineLength style)
                                     (ribbonsPerLine style)
-                                    txtPrinter (fromString cont) doc
+                                    txtPrinter (fromList cont) doc
 
 instance (Chars string, Eq string) => Eq (Doc string a) where
   (==) = (==) `on` render
@@ -336,7 +320,7 @@ instance Functor (Doc string) where
   fmap f (Beside ld s rd)    = Beside (fmap f ld) s (fmap f rd)
   fmap f (Above ud s ld)     = Above (fmap f ud) s (fmap f ld)
 
-instance (NFData a, Chars string) => NFData (Doc string a) where
+instance (NFData string, NFData a, Chars string) => NFData (Doc string a) where
   rnf Empty               = ()
   rnf (NilAbove d)        = rnf d
   rnf (TextBeside td d)   = rnf td `seq` rnf d
@@ -346,12 +330,12 @@ instance (NFData a, Chars string) => NFData (Doc string a) where
   rnf (Beside ld s rd)    = rnf ld `seq` rnf s `seq` rnf rd
   rnf (Above ud s ld)     = rnf ud `seq` rnf s `seq` rnf ld
 
-instance (NFData a, Chars string) => NFData (AnnotDetails string a) where
+instance (NFData string, NFData a, Chars string) => NFData (AnnotDetails string a) where
   rnf AnnotStart     = ()
   rnf (NoAnnot d sl) = rnf d `seq` rnf sl
   rnf (AnnotEnd a)   = rnf a
 
-instance Chars string => NFData (TextDetails string) where
+instance NFData string => NFData (TextDetails string) where
   rnf (Chr c)    = rnf c
   rnf (Str str)  = rnf str
   rnf (PStr str) = rnf str
@@ -410,7 +394,7 @@ isEmpty _     = False
 --
 -- an old version inserted tabs being 8 columns apart in the output.
 indent :: Chars string => Int -> string
-indent !n = fromString $ replicate n ' '
+indent !n = fromList $ replicate n ' '
 
 {-
 Q: What is the reason for negative indentation (i.e. argument to indent
@@ -475,11 +459,11 @@ integer  :: Chars string => Integer  -> Doc string a -- ^ @integer n = text (sho
 float    :: Chars string => Float    -> Doc string a -- ^ @float n = text (show n)@
 double   :: Chars string => Double   -> Doc string a -- ^ @double n = text (show n)@
 rational :: Chars string => Rational -> Doc string a -- ^ @rational n = text (show n)@
-int      n = text (fromString $ show n)
-integer  n = text (fromString $ show n)
-float    n = text (fromString $ show n)
-double   n = text (fromString $ show n)
-rational n = text (fromString $ show n)
+int      n = text (fromList $ show n)
+integer  n = text (fromList $ show n)
+float    n = text (fromList $ show n)
+double   n = text (fromList $ show n)
+rational n = text (fromList $ show n)
 
 parens       :: Chars string => Doc string a -> Doc string a -- ^ Wrap document in @(...)@
 brackets     :: Chars string => Doc string a -> Doc string a -- ^ Wrap document in @[...]@
@@ -1079,13 +1063,13 @@ display m !page_width !ribbon_width txt end doc
             = case m of
                     ZigZagMode |  k >= gap_width
                                -> nlText `txt` (
-                                  NoAnnot (Str (fromString (replicate shift '/'))) shift `txt` (
+                                  NoAnnot (Str (fromList (replicate shift '/'))) shift `txt` (
                                   nlText `txt`
                                   lay1 (k - shift) s p ))
 
                                |  k < 0
                                -> nlText `txt` (
-                                  NoAnnot (Str (fromString (replicate shift '\\'))) shift `txt` (
+                                  NoAnnot (Str (fromList (replicate shift '\\'))) shift `txt` (
                                   nlText `txt`
                                   lay1 (k + shift) s p ))
 
@@ -1229,7 +1213,7 @@ renderDecoratedM startAnn endAnn txt docEnd =
 
   annPrinter (NoAnnot td _) (rest,stack) =
     case td of
-      Chr  c -> (txt (fromString [c]) >> rest, stack)
+      Chr  c -> (txt (fromList [c]) >> rest, stack)
       Str  s -> (txt s   >> rest, stack)
       PStr s -> (txt s   >> rest, stack)
 

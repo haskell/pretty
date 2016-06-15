@@ -15,6 +15,8 @@ import Control.Applicative ((<$>))
 #endif
 import Control.Monad
 import Data.String (fromString)
+import Data.ListLike (length)
+import Prelude hiding (length)
 
 import Test.QuickCheck
 
@@ -39,7 +41,7 @@ instance Chars string => Arbitrary (CDoc string) where
 
 instance Chars string => CoArbitrary (CDoc string) where
    coarbitrary CEmpty = variant 0
-   coarbitrary (CText t) = variant 1 . coarbitrary (PrettyTestVersion.length t)
+   coarbitrary (CText t) = variant 1 . coarbitrary (length t)
    coarbitrary (CList f list) = variant 2 . coarbitrary f . coarbitrary list
    coarbitrary (CBeside b d1 d2) = variant 3 . coarbitrary b . coarbitrary d1 . coarbitrary d2
    coarbitrary (CAbove b d1 d2) = variant 4 . coarbitrary b . coarbitrary d1 . coarbitrary d2
@@ -69,7 +71,7 @@ instance Chars string => Arbitrary (Text string) where
         where arbChar = oneof (fmap return ['a'..'c'])
 
 instance Chars string => CoArbitrary (Text string) where
-    coarbitrary (Text str) = coarbitrary (PrettyTestVersion.length str)
+    coarbitrary (Text str) = coarbitrary (length str)
 
 emptyDocGen :: Gen (CDoc string)
 emptyDocGen = return CEmpty

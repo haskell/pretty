@@ -36,24 +36,13 @@ import Data.List (intersperse)
 import Data.Monoid ( Monoid(mappend, mconcat) )
 #endif
 import Data.String (IsString(fromString))
+import qualified Data.ListLike as ListLike
 import Data.Text (Text)
 import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
 import Debug.Trace
 
 import Test.QuickCheck
-
-instance Chars Text where
-    cons = Text.cons
-    snoc s c = Text.append s (Text.singleton c)
-    length = Text.length
-    toString = Text.unpack
-    putStr = Text.putStr
-    putStrLn = Text.putStrLn
-    filter = Text.filter
-    lines = Text.lines
-    unlines = Text.unlines
-    map = Text.map
 
 main :: IO ()
 main = do
@@ -165,9 +154,9 @@ infix 4 `lseq`
 infix 4 `rdeq`
 
 debugRender :: Chars string => Int -> Doc string () -> IO ()
-debugRender k = Chars.putStr . visibleSpaces . renderStyle (Style PageMode k 1)
+debugRender k = ListLike.putStr . visibleSpaces . renderStyle (Style PageMode k 1)
 visibleSpaces :: Chars string => string -> string
-visibleSpaces = mconcat . map (`Chars.snoc` '\n') . map (Chars.map visibleSpace) . Chars.lines
+visibleSpaces = mconcat . map (`ListLike.snoc` '\n') . map (ListLike.map visibleSpace) . ListLike.lines
 
 visibleSpace :: Char -> Char
 visibleSpace ' ' = '.'
@@ -268,7 +257,7 @@ check_n = do
 -}    
 prop_m1 :: TestStructures.Text Text -> Doc Text () -> Doc Text () -> Bool
 prop_m1 s x y = (text' s <> x) $$ y `deq` text' s <> ((text "" <> x) $$ 
-                 nest (-Chars.length (unText s)) y)
+                 nest (-ListLike.length (unText s)) y)
 prop_m2 :: Doc Text () -> Doc Text () -> Doc Text () -> Property
 prop_m2 x y z = not (isEmpty y) ==>
                 (x $$ y) <> z      `deq` x $$ (y <> z)
@@ -804,10 +793,10 @@ check_rendering = do
         extractTextZZ (renderStyle (Style ZigZagMode 6 1.7) d) == extractText (oneLineRender d)
         
 extractText :: Chars string => string -> string
-extractText = Chars.filter (not . isSpace)
+extractText = ListLike.filter (not . isSpace)
 
 extractTextZZ :: Chars string => string -> string
-extractTextZZ = Chars.filter (\c -> not (isSpace c) && c /= '/' && c /= '\\')
+extractTextZZ = ListLike.filter (\c -> not (isSpace c) && c /= '/' && c /= '\\')
 
 punctuateDef :: Doc string () -> [Doc string ()] -> [Doc string ()]
 punctuateDef p [] = []
@@ -1001,7 +990,7 @@ extractTexts = map normWS . genericProp combine go where
     go NoDoc               = stop []
     go _ = recurse [""]
     -- modulo whitespace
-    normWS txt = Chars.filter (not . isWS) txt where
+    normWS txt = ListLike.filter (not . isWS) txt where
         isWS ws | ws == ' ' || ws == '\n' || ws == '\t'  = True
                 | otherwise = False 
                 
