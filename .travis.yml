@@ -29,6 +29,8 @@ install:
   - cabal --version
   - ghc --version
   - travis_retry cabal update
+  - travis_retry git clone https://github.com/JohnLato/listlike.git
+  - cabal install -fsafe ./listlike
 
 script:
  - cabal install --only-dependencies
