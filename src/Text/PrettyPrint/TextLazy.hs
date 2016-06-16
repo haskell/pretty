@@ -25,7 +25,7 @@
 module Text.PrettyPrint.TextLazy (
 
         -- * The document type
-        Doc,
+        PP.Chars, Doc,
 
         -- * Constructing documents
 
@@ -68,7 +68,7 @@ module Text.PrettyPrint.TextLazy (
 
     ) where
 
-import qualified Text.PrettyPrint.HughesPJ as PP
+import qualified Text.PrettyPrint.ListLike as PP
 import Data.Text.Lazy (Text)
 
 type Doc = PP.Doc Data.Text.Lazy.Text

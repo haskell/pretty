@@ -25,7 +25,7 @@
 module Text.PrettyPrint.TextStrict (
 
         -- * The document type
-        Doc,
+        PP.Chars, Doc,
 
         -- * Constructing documents
 
@@ -68,7 +68,7 @@ module Text.PrettyPrint.TextStrict (
 
     ) where
 
-import qualified Text.PrettyPrint.HughesPJ as PP
+import qualified Text.PrettyPrint.ListLike as PP
 import Data.Text (Text)
 
 type Doc = PP.Doc Data.Text.Text

@@ -12,5 +12,5 @@
 -- version of HughesPJ for testing purposes.
 module PrettyTestVersion where
 
-#include "HughesPJ.hs"
+#include "ListLike.hs"
 

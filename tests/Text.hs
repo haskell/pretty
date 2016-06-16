@@ -64,7 +64,7 @@ module Text (
 
     ) where
 
-import qualified Text.PrettyPrint.Annotated.HughesPJ as PP
+import qualified Text.PrettyPrint.Annotated.ListLike as PP
 import Data.Text as Text
 import Data.Text.IO as Text
 

@@ -7,7 +7,7 @@ import Control.Monad
 import System.Exit
 import Data.Text as Text
 import Data.Text.IO as Text
-import Text.PrettyPrint.Annotated.HughesPJ (Chars(..))
+import Text.PrettyPrint.Annotated.String
 
 simpleMatch :: String -> String -> String -> IO ()
 simpleMatch test expected actual =

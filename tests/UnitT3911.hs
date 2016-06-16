@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module UnitT3911 where
 
-import Text.PrettyPrint.HughesPJ
+import Text.PrettyPrint.ListLike
 import Data.Text as Text hiding (empty, foldr)
 
 import TestUtils

@@ -68,7 +68,7 @@ module Text.PrettyPrint.Annotated.String (
 
     ) where
 
-import qualified Text.PrettyPrint.Annotated.HughesPJ as PP
+import qualified Text.PrettyPrint.Annotated.ListLike as PP
 
 type Doc = PP.Doc String
 

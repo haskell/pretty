@@ -68,7 +68,7 @@ module Text.PrettyPrint.Annotated.TextStrict (
 
     ) where
 
-import qualified Text.PrettyPrint.Annotated.HughesPJ as PP
+import qualified Text.PrettyPrint.Annotated.ListLike as PP
 import Data.Text (Text)
 
 type Doc = PP.Doc Text

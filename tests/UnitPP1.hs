@@ -9,7 +9,7 @@ module UnitPP1 where
 
 import TestUtils
 
-import Text.PrettyPrint.HughesPJ
+import Text.PrettyPrint.ListLike
 import Data.Text hiding (foldl1, take)
 
 ncat :: Doc Text -> Doc Text -> Doc Text

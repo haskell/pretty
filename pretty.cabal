@@ -34,17 +34,27 @@ Library
     hs-source-dirs: src
     exposed-modules:
         Text.PrettyPrint
-        Text.PrettyPrint.HughesPJ
         Text.PrettyPrint.HughesPJClass
-        Text.PrettyPrint.Annotated
-        Text.PrettyPrint.Annotated.HughesPJ
-        Text.PrettyPrint.Annotated.HughesPJClass
-        Text.PrettyPrint.Annotated.String
-        Text.PrettyPrint.Annotated.TextLazy
-        Text.PrettyPrint.Annotated.TextStrict
+        Text.PrettyPrint.HughesPJClass.ListLike
+        Text.PrettyPrint.HughesPJClass.String
+        Text.PrettyPrint.HughesPJClass.TextLazy
+        Text.PrettyPrint.HughesPJClass.TextStrict
+        Text.PrettyPrint.HughesPJ
+        Text.PrettyPrint.ListLike
         Text.PrettyPrint.String
         Text.PrettyPrint.TextLazy
         Text.PrettyPrint.TextStrict
+        Text.PrettyPrint.Annotated
+        Text.PrettyPrint.Annotated.ListLike
+        Text.PrettyPrint.Annotated.HughesPJ
+        Text.PrettyPrint.Annotated.HughesPJClass
+        Text.PrettyPrint.Annotated.HughesPJClass.ListLike
+        Text.PrettyPrint.Annotated.HughesPJClass.String
+        Text.PrettyPrint.Annotated.HughesPJClass.TextLazy
+        Text.PrettyPrint.Annotated.HughesPJClass.TextStrict
+        Text.PrettyPrint.Annotated.String
+        Text.PrettyPrint.Annotated.TextLazy
+        Text.PrettyPrint.Annotated.TextStrict
     build-depends: base >= 4.5 && < 5,
                    deepseq >= 1.1,
                    ghc-prim,

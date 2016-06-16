@@ -68,7 +68,7 @@ module Text.PrettyPrint.Annotated.TextLazy (
 
     ) where
 
-import qualified Text.PrettyPrint.Annotated.HughesPJ as PP
+import qualified Text.PrettyPrint.Annotated.ListLike as PP
 import Data.Text.Lazy (Text)
 
 type Doc = PP.Doc Text

@@ -25,7 +25,7 @@
 module Text.PrettyPrint.String (
 
         -- * The document type
-        Doc,
+        PP.Chars, Doc,
 
         -- * Constructing documents
 
@@ -68,7 +68,7 @@ module Text.PrettyPrint.String (
 
     ) where
 
-import qualified Text.PrettyPrint.HughesPJ as PP
+import qualified Text.PrettyPrint.ListLike as PP
 
 type Doc = PP.Doc String
 
