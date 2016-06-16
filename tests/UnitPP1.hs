@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 -- This code used to print an infinite string, by calling 'spaces'
 -- with a negative argument.  There's a patch in the library now,
 -- which makes 'spaces' do something sensible when called with a negative
@@ -7,12 +9,13 @@ module UnitPP1 where
 
 import TestUtils
 
-import Text.PrettyPrint.HughesPJ
+import Text.PrettyPrint.ListLike
+import Data.Text hiding (foldl1, take)
 
-ncat :: Doc -> Doc -> Doc
+ncat :: Doc Text -> Doc Text -> Doc Text
 ncat x y = nest 4 $ cat [ x, y ]
 
-d1, d2 :: Doc
+d1, d2 :: Doc Text
 d1 = foldl1 ncat $ take 50 $ repeat $ char 'a'
 d2 = parens $  sep [ d1, text "+" , d1 ]
 

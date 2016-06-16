@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 -- | Datatypes for law QuickChecks
 
 -- User visible combinators. The tests are performed on pretty printing terms
@@ -13,23 +15,29 @@ module TestStructures (
     ) where
 
 import PrettyTestVersion
+import qualified Data.Text as Text
+import Data.String (fromString)
+#if __GLASGOW_HASKELL__ < 709
+import Data.Monoid ( Monoid(mempty)  )
+#endif
 
-data CDoc = CEmpty           -- empty
-          | CText String     -- text s
-          | CList CList [CDoc] -- cat,sep,fcat,fsep ds
-          | CBeside Bool CDoc CDoc -- a <> b and a <+> b
-          | CAbove Bool CDoc CDoc  -- a $$ b and a $+$ b
-          | CNest Int CDoc   -- nest k d
+data CDoc string =
+            CEmpty           -- empty
+          | CText string     -- text s
+          | CList CList [CDoc string] -- cat,sep,fcat,fsep ds
+          | CBeside Bool (CDoc string) (CDoc string) -- a <> b and a <+> b
+          | CAbove Bool (CDoc string) (CDoc string)  -- a $$ b and a $+$ b
+          | CNest Int (CDoc string)   -- nest k d
     deriving (Eq, Ord)
 
 data CList = CCat | CSep | CFCat | CFSep deriving (Eq,Ord)
 
-newtype CDocList = CDocList { unDocList :: [CDoc] } 
+newtype CDocList string = CDocList { unDocList :: [CDoc string] } 
 
--- wrapper for String argument of `text'
-newtype Text = Text { unText :: String } deriving (Eq, Ord, Show)
+-- wrapper for string argument of `text'
+newtype Text string = Text { unText :: string } deriving (Eq, Ord, Show)
 
-instance Show CDoc where
+instance Show string => Show (CDoc string) where
     showsPrec k CEmpty = showString "empty"
     showsPrec k (CText s) = showParen (k >= 10) (showString " text " . shows s)
     showsPrec k (CList sp ds) = showParen (k >= 10) $ (shows sp . showList ds)
@@ -42,44 +50,44 @@ instance Show CDoc where
 instance Show CList where 
     show cs = case cs of CCat -> "cat" ;  CSep -> "sep" ; CFCat -> "fcat"  ; CFSep -> "fsep" 
 
-instance Show CDocList where show = show . unDocList
+instance Show string => Show (CDocList string) where show = show . unDocList
  
-buildDoc :: CDoc -> Doc ()
+buildDoc :: Chars string => CDoc string -> Doc string ()
 buildDoc CEmpty = empty
 buildDoc (CText s) = text s
-buildDoc (CList sp ds) = (listComb sp) $ map buildDoc ds
+buildDoc (CList sp ds) = (listComb sp) $ fmap buildDoc ds
 buildDoc (CBeside sep d1 d2) = (if sep then (<+>) else (<>)) (buildDoc d1) (buildDoc d2) 
 buildDoc (CAbove noOvlap d1 d2) = (if noOvlap then ($+$) else ($$)) (buildDoc d1) (buildDoc d2) 
 buildDoc (CNest k d) = nest k $ buildDoc d
 
-listComb :: CList -> ([Doc ()] -> Doc ())
+listComb :: Chars string => CList -> ([Doc string ()] -> Doc string ())
 listComb cs = case cs of CCat -> cat ;  CSep -> sep ; CFCat -> fcat  ; CFSep -> fsep
 
-liftDoc2 :: (Doc () -> Doc () -> a) -> (CDoc -> CDoc -> a)
+liftDoc2 :: Chars string => (Doc string () -> Doc string () -> a) -> (CDoc string -> CDoc string -> a)
 liftDoc2 f cd1 cd2 = f (buildDoc cd1) (buildDoc cd2)
 
-liftDoc3 :: (Doc () -> Doc () -> Doc () -> a) -> (CDoc -> CDoc -> CDoc -> a)
+liftDoc3 :: Chars string => (Doc string () -> Doc string () -> Doc string () -> a) -> (CDoc string -> CDoc string -> CDoc string -> a)
 liftDoc3 f cd1 cd2 cd3 = f (buildDoc cd1) (buildDoc cd2) (buildDoc cd3)
     
-buildDocList :: CDocList -> [Doc ()]
-buildDocList = map buildDoc . unDocList
+buildDocList :: Chars string => CDocList string -> [Doc string ()]
+buildDocList = fmap buildDoc . unDocList
 
-text' :: Text -> Doc ()
+text' :: Chars string => Text string -> Doc string ()
 text' (Text str) = text str
 
-annotToTd :: AnnotDetails a -> TextDetails
+annotToTd :: Chars string => AnnotDetails string a -> TextDetails string
 annotToTd (NoAnnot s _) = s
-annotToTd _             = Str ""
+annotToTd _             = Str mempty
 
 -- convert text details to string
-tdToStr :: TextDetails -> String
-tdToStr (Chr c) = [c]
+tdToStr :: Chars string => TextDetails string -> string
+tdToStr (Chr c) = fromString [c]
 tdToStr (Str s) = s
 tdToStr (PStr s) = s
 
 -- synthesize with stop for cdoc
 -- constructor order
-genericCProp :: (a -> a -> a) -> (CDoc -> (a, Bool)) -> CDoc -> a
+genericCProp :: (a -> a -> a) -> (CDoc string -> (a, Bool)) -> CDoc string -> a
 genericCProp c q cdoc = 
     case q cdoc of
         (v,False) -> v
@@ -89,7 +97,7 @@ genericCProp c q cdoc =
         subs = case cdoc of
             CEmpty  -> []
             CText _ -> []
-            CList _ ds -> map rec ds
+            CList _ ds -> fmap rec ds
             CBeside _ d1 d2 -> [rec d1, rec d2]
             CAbove b d1 d2 -> [rec d1, rec d2]
             CNest k d -> [rec d]

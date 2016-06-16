@@ -1,5 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
 #if __GLASGOW_HASKELL__ >= 701
 {-# LANGUAGE DeriveGeneric #-}
 #endif
@@ -10,5 +12,5 @@
 -- version of HughesPJ for testing purposes.
 module PrettyTestVersion where
 
-#include "HughesPJ.hs"
+#include "ListLike.hs"
 

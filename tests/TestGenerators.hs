@@ -1,3 +1,5 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Test generators.
 --
 module TestGenerators (
@@ -8,17 +10,23 @@ module TestGenerators (
 import PrettyTestVersion
 import TestStructures
 
+#if __GLASGOW_HASKELL__ < 709
+import Control.Applicative ((<$>))
+#endif
 import Control.Monad
+import Data.String (fromString)
+import Data.ListLike (length)
+import Prelude hiding (length)
 
 import Test.QuickCheck
 
-instance Arbitrary CDoc where
+instance Chars string => Arbitrary (CDoc string) where
    arbitrary = sized arbDoc
     where
       -- TODO: finetune frequencies
       arbDoc k | k <= 1 = frequency [
                (1,return CEmpty)
-             , (2,return (CText . unText) `ap` arbitrary)
+             , (2,return (CText . fromString . unText) `ap` arbitrary)
              ]
       arbDoc n = frequency [
              (1, return CList `ap` arbitrary `ap`  (liftM unDocList $ resize (pred n) arbitrary))
@@ -31,7 +39,7 @@ instance Arbitrary CDoc where
         return f `ap` arbitrary `ap` (resize n1 arbitrary) `ap` (resize n2 arbitrary)
       split2 n = flip liftM ( choose (0,n) ) $ \sz -> (sz, n - sz)
 
-instance CoArbitrary CDoc where
+instance Chars string => CoArbitrary (CDoc string) where
    coarbitrary CEmpty = variant 0
    coarbitrary (CText t) = variant 1 . coarbitrary (length t)
    coarbitrary (CList f list) = variant 2 . coarbitrary f . coarbitrary list
@@ -40,14 +48,14 @@ instance CoArbitrary CDoc where
    coarbitrary (CNest k d) = variant 5 . coarbitrary k . coarbitrary d
    
 instance Arbitrary CList where
-    arbitrary = oneof $ map return [ CCat, CSep, CFCat, CFSep ]
+    arbitrary = oneof $ fmap return [ CCat, CSep, CFCat, CFSep ]
 
 instance CoArbitrary CList where
     coarbitrary cl = variant (case cl of CCat -> 0; CSep -> 1; CFCat -> 2; CFSep -> 3)
 
 -- we assume that the list itself has no size, so that 
 -- sizeof (a $$ b) = sizeof (sep [a,b]) = sizeof(a) + sizeof(b)+1
-instance Arbitrary CDocList where
+instance Chars string => Arbitrary (CDocList string) where
     arbitrary = liftM CDocList $ sized $ \n -> arbDocList n where
         arbDocList 0 = return []
         arbDocList n = do
@@ -55,20 +63,20 @@ instance Arbitrary CDocList where
           let elems = take listSz $ repeat (n `div` listSz) -- approximative
           mapM (\sz -> resize sz arbitrary) elems
 
-instance CoArbitrary CDocList where
+instance Chars string => CoArbitrary (CDocList string) where
     coarbitrary (CDocList ds) = coarbitrary ds
 
-instance Arbitrary Text where
-    arbitrary = liftM Text $ sized $ \n -> mapM (const arbChar) [1..n]
-        where arbChar = oneof (map return ['a'..'c'])
+instance Chars string => Arbitrary (Text string) where
+    arbitrary = liftM Text $ sized $ \n -> (fromString <$> mapM (const arbChar) [1..n])
+        where arbChar = oneof (fmap return ['a'..'c'])
 
-instance CoArbitrary Text where
+instance Chars string => CoArbitrary (Text string) where
     coarbitrary (Text str) = coarbitrary (length str)
 
-emptyDocGen :: Gen CDoc
+emptyDocGen :: Gen (CDoc string)
 emptyDocGen = return CEmpty
 
-emptyDocListGen :: Gen CDocList
+emptyDocListGen :: Gen (CDocList string)
 emptyDocListGen = do
     ls <- listOf emptyDocGen
     return $ CDocList ls

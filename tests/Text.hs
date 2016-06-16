@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Text.PrettyPrint
+-- Module      :  Text.PrettyPrint.Text
 -- Copyright   :  (c) The University of Glasgow 2001
 -- License     :  BSD-style (see the file LICENSE)
 -- 
@@ -18,7 +18,7 @@
 --
 -----------------------------------------------------------------------------
 
-module Text.PrettyPrint ( 
+module Text (
 
         -- * The document type
         Doc,
@@ -26,27 +26,27 @@ module Text.PrettyPrint (
         -- * Constructing documents
 
         -- ** Converting values into documents
-        char, text, ptext, sizedText, zeroWidthText,
-        int, integer, float, double, rational,
+        PP.char, text, ptext, sizedText, zeroWidthText,
+        PP.int, PP.integer, PP.float, PP.double, PP.rational,
 
         -- ** Simple derived documents
-        semi, comma, colon, space, equals,
-        lparen, rparen, lbrack, rbrack, lbrace, rbrace,
+        PP.semi, PP.comma, PP.colon, PP.space, PP.equals,
+        PP.lparen, PP.rparen, PP.lbrack, PP.rbrack, PP.lbrace, PP.rbrace,
 
         -- ** Wrapping documents in delimiters
-        parens, brackets, braces, quotes, doubleQuotes,
+        PP.parens, PP.brackets, PP.braces, PP.quotes, PP.doubleQuotes,
 
         -- ** Combining documents
-        empty,
-        (<>), (<+>), hcat, hsep,
-        ($$), ($+$), vcat,
-        sep, cat,
-        fsep, fcat,
-        nest,
-        hang, punctuate,
+        PP.empty,
+        (PP.<>), (PP.<+>), PP.hcat, PP.hsep,
+        (PP.$$), (PP.$+$), PP.vcat,
+        PP.sep, PP.cat,
+        PP.fsep, PP.fcat,
+        PP.nest,
+        PP.hang, PP.punctuate,
 
         -- * Predicates on documents
-        isEmpty,
+        PP.isEmpty,
 
         -- * Rendering documents
 
@@ -54,15 +54,33 @@ module Text.PrettyPrint (
         render,
 
         -- ** Rendering with a particular style
-        Style(..),
-        style,
+        PP.Style(..),
+        PP.style,
         renderStyle,
 
         -- ** General rendering
-        fullRender,
-        Mode(..), TextDetails
+        PP.fullRender,
+        PP.Mode(..), TextDetails
 
     ) where
 
-import Text.PrettyPrint.String
+import qualified Text.PrettyPrint.Annotated.ListLike as PP
+import Data.Text as Text
+import Data.Text.IO as Text
 
+type Doc a = PP.Doc Text a
+
+text :: Text -> Doc a
+text = PP.text
+ptext :: Text -> Doc a
+ptext = PP.ptext
+sizedText :: Int -> Text -> Doc a
+sizedText = PP.sizedText
+zeroWidthText :: Text -> Doc a
+zeroWidthText = PP.zeroWidthText
+render :: Doc a -> Text
+render = PP.render
+renderStyle :: PP.Style -> Doc a -> Text
+renderStyle = PP.renderStyle
+
+type TextDetails = PP.TextDetails Text

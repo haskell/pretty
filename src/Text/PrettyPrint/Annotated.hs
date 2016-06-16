@@ -74,5 +74,5 @@ module Text.PrettyPrint.Annotated (
 
     ) where
 
-import Text.PrettyPrint.Annotated.HughesPJ
+import Text.PrettyPrint.Annotated.ListLike
 
