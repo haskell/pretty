@@ -4,7 +4,9 @@
 #endif
 
 module Text.PrettyPrint.HughesPJClass
-    ( module Text.PrettyPrint.HughesPJClass.String
+    ( module Text.PrettyPrint.String
+    , module Text.PrettyPrint.HughesPJClass.String
     ) where
 
+import Text.PrettyPrint.String
 import Text.PrettyPrint.HughesPJClass.String
