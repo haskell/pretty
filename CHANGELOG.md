@@ -1,5 +1,10 @@
 # Pretty library change log
 
+## 1.1.3.5 -- 1st February, 2017
+
+* Fix documentation formatting bug (by Ivan Lazar Miljenovic)
+* Fix missing git tag on Github for v1.1.3.4 release.
+
 ## 1.1.3.4 -- 3rd June, 2016
 
 * Fix over-zeleaous use of strictness causing stack allocation, fixes part of
