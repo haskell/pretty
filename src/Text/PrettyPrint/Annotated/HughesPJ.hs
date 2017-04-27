@@ -251,6 +251,9 @@ annotSize :: AnnotDetails a -> Int
 annotSize (NoAnnot _ l) = l
 annotSize _             = 0
 
+-- | A `RuneSequence` represents a piece of textual data which can be
+-- reified back to a `String`, and which supports an efficient way to get
+-- the total length of the sequence.
 class RuneSequence r where
   len    :: r -> Int
   unpack :: r -> String
