@@ -3,6 +3,8 @@
 #if __GLASGOW_HASKELL__ >= 701
 {-# LANGUAGE Safe #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 #endif
 
 -----------------------------------------------------------------------------
@@ -30,7 +32,7 @@ module Text.PrettyPrint.Annotated.HughesPJ (
         -- * Constructing documents
 
         -- ** Converting values into documents
-        char, text, ptext, sizedText, zeroWidthText,
+        char, text, sizedText, zeroWidthText,
         int, integer, float, double, rational,
 
         -- ** Simple derived documents
@@ -76,6 +78,7 @@ module Text.PrettyPrint.Annotated.HughesPJ (
         Mode(..),
 
         -- ** General rendering
+        RuneSequence(..),
         fullRender,
         fullRenderAnn
 
@@ -248,13 +251,18 @@ annotSize :: AnnotDetails a -> Int
 annotSize (NoAnnot _ l) = l
 annotSize _             = 0
 
+class RuneSequence r where
+  len    :: r -> Int
+  unpack :: r -> String
+
+instance RuneSequence String where
+  len    = length
+  unpack = id
+
 -- | A TextDetails represents a fragment of text that will be output at some
 -- point in a @Doc@.
 data TextDetails = Chr  {-# UNPACK #-} !Char -- ^ A single Char fragment
                  | Str  String -- ^ A whole String fragment
-                 | PStr String -- ^ Used to represent a Fast String fragment
-                               --   but now deprecated and identical to the
-                               --   Str constructor.
 #if __GLASGOW_HASKELL__ >= 701
                  deriving (Show, Eq, Generic)
 #endif
@@ -316,7 +324,6 @@ instance NFData a => NFData (AnnotDetails a) where
 instance NFData TextDetails where
   rnf (Chr c)    = rnf c
   rnf (Str str)  = rnf str
-  rnf (PStr str) = rnf str
 
 -- ---------------------------------------------------------------------------
 -- Values and Predicates on GDocs and TextDetails
@@ -341,20 +348,16 @@ char c = textBeside_ (NoAnnot (Chr c) 1) Empty
 --
 -- The side condition on the last law is necessary because @'text' \"\"@
 -- has height 1, while 'empty' has no height.
-text :: String -> Doc a
-text s = case length s of {sl -> textBeside_ (NoAnnot (Str s) sl) Empty}
-
--- | Same as @text@. Used to be used for Bytestrings.
-ptext :: String -> Doc a
-ptext s = case length s of {sl -> textBeside_ (NoAnnot (PStr s) sl) Empty}
+text :: RuneSequence r => r -> Doc a
+text s = case len s of {sl -> textBeside_ (NoAnnot (Str . unpack $ s) sl) Empty}
 
 -- | Some text with any width. (@text s = sizedText (length s) s@)
-sizedText :: Int -> String -> Doc a
-sizedText l s = textBeside_ (NoAnnot (Str s) l) Empty
+sizedText :: RuneSequence r => Int -> r -> Doc a
+sizedText l s = textBeside_ (NoAnnot (Str  . unpack $ s) l) Empty
 
 -- | Some text, but without any width. Use for non-printing text
 -- such as a HTML or Latex tags
-zeroWidthText :: String -> Doc a
+zeroWidthText :: RuneSequence r => r -> Doc a
 zeroWidthText = sizedText 0
 
 -- | The empty document, with no height and no width.
@@ -964,7 +967,6 @@ renderStyle s = fullRender (mode s) (lineLength s) (ribbonsPerLine s)
 txtPrinter :: TextDetails -> String -> String
 txtPrinter (Chr c)   s  = c:s
 txtPrinter (Str s1)  s2 = s1 ++ s2
-txtPrinter (PStr s1) s2 = s1 ++ s2
 
 -- | The general rendering interface. Please refer to the @Style@ and @Mode@
 -- types for a description of rendering mode, line length and ribbons.
@@ -1130,7 +1132,6 @@ renderSpans  = finalize
     case td of
       Chr  c -> s { sOutput = c  : sOutput s, sOffset = sOffset s + l }
       Str  t -> s { sOutput = t ++ sOutput s, sOffset = sOffset s + l }
-      PStr t -> s { sOutput = t ++ sOutput s, sOffset = sOffset s + l }
 
 
 -- | Render out a String, interpreting the annotations as part of the resulting
@@ -1186,6 +1187,5 @@ renderDecoratedM startAnn endAnn txt docEnd =
     case td of
       Chr  c -> (txt [c] >> rest, stack)
       Str  s -> (txt s   >> rest, stack)
-      PStr s -> (txt s   >> rest, stack)
 
   finalize (m,_) = m

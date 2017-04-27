@@ -37,7 +37,7 @@ module Text.PrettyPrint.HughesPJ (
         -- * Constructing documents
 
         -- ** Converting values into documents
-        char, text, ptext, sizedText, zeroWidthText,
+        char, text, sizedText, zeroWidthText,
         int, integer, float, double, rational,
 
         -- ** Simple derived documents
@@ -81,7 +81,7 @@ module Text.PrettyPrint.HughesPJ (
 #endif
 
 import           Text.PrettyPrint.Annotated.HughesPJ
-                     ( TextDetails(..), Mode(..), Style(..), style )
+                     ( RuneSequence(..), TextDetails(..), Mode(..), Style(..), style )
 import qualified Text.PrettyPrint.Annotated.HughesPJ as Ann
 
 import Control.DeepSeq ( NFData(rnf) )
@@ -171,22 +171,17 @@ char c = Doc (Ann.char c)
 --
 -- The side condition on the last law is necessary because @'text' \"\"@
 -- has height 1, while 'empty' has no height.
-text :: String -> Doc
+text :: Ann.RuneSequence r => r -> Doc
 text s = Doc (Ann.text s)
 {-# INLINE text #-}
 
--- | Same as @text@. Used to be used for Bytestrings.
-ptext :: String -> Doc
-ptext s = Doc (Ann.ptext s)
-{-# INLINE ptext #-}
-
 -- | Some text with any width. (@text s = sizedText (length s) s@)
-sizedText :: Int -> String -> Doc
+sizedText :: Ann.RuneSequence r => Int -> r -> Doc
 sizedText l s = Doc (Ann.sizedText l s)
 
 -- | Some text, but without any width. Use for non-printing text
 -- such as a HTML or Latex tags
-zeroWidthText :: String -> Doc
+zeroWidthText :: Ann.RuneSequence r => r -> Doc
 zeroWidthText = sizedText 0
 
 -- | The empty document, with no height and no width.
@@ -437,7 +432,6 @@ renderStyle s = fullRender (mode s) (lineLength s) (ribbonsPerLine s)
 txtPrinter :: TextDetails -> String -> String
 txtPrinter (Chr c)   s  = c:s
 txtPrinter (Str s1)  s2 = s1 ++ s2
-txtPrinter (PStr s1) s2 = s1 ++ s2
 
 -- | The general rendering interface. Please refer to the @Style@ and @Mode@
 -- types for a description of rendering mode, line length and ribbons.

@@ -1,4 +1,4 @@
-#if __GLASGOW_HASKELL__ >= 701
+# if __GLASGOW_HASKELL__ >= 701
 {-# LANGUAGE Safe #-}
 #endif
 -----------------------------------------------------------------------------
@@ -29,7 +29,7 @@ module Text.PrettyPrint.Annotated (
         -- * Constructing documents
 
         -- ** Converting values into documents
-        char, text, ptext, sizedText, zeroWidthText,
+        char, text, sizedText, zeroWidthText,
         int, integer, float, double, rational,
 
         -- ** Simple derived documents
@@ -68,6 +68,7 @@ module Text.PrettyPrint.Annotated (
         renderStyle,
 
         -- ** General rendering
+        RuneSequence(..),
         fullRender,
         fullRenderAnn,
         Mode(..), TextDetails(..)
