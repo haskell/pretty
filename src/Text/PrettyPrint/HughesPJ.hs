@@ -81,7 +81,7 @@ module Text.PrettyPrint.HughesPJ (
 #endif
 
 import           Text.PrettyPrint.Annotated.HughesPJ
-                     ( RuneSequence(..), TextDetails(..), Mode(..), Style(..), style )
+                     ( TextDetails(..), Mode(..), Style(..), style )
 import qualified Text.PrettyPrint.Annotated.HughesPJ as Ann
 
 import Control.DeepSeq ( NFData(rnf) )

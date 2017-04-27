@@ -2,6 +2,7 @@
 {-# LANGUAGE BangPatterns #-}
 #if __GLASGOW_HASKELL__ >= 701
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleInstances #-}
 #endif
 
 #define TESTING

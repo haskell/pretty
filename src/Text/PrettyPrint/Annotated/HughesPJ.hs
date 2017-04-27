@@ -3,7 +3,6 @@
 #if __GLASGOW_HASKELL__ >= 701
 {-# LANGUAGE Safe #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 #endif
 
@@ -258,7 +257,7 @@ class RuneSequence r where
   len    :: r -> Int
   unpack :: r -> String
 
-instance RuneSequence String where
+instance RuneSequence [Char] where
   len    = length
   unpack = id
 
