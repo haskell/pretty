@@ -55,6 +55,8 @@ Test-Suite test-pretty
                    QuickCheck >= 2.5 && <3
     main-is: Test.hs
     other-modules:
+        Text.PrettyPrint.Annotated.HughesPJ
+        Text.PrettyPrint.HughesPJ
         PrettyTestVersion
         TestGenerators
         TestStructures
@@ -67,3 +69,11 @@ Test-Suite test-pretty
     include-dirs: src/Text/PrettyPrint/Annotated
     ghc-options: -rtsopts -with-rtsopts=-K2M
 
+benchmark pretty-bench
+  type: exitcode-stdio-1.0
+  main-is: Bench.hs
+  hs-source-dirs: bench
+  ghc-options: -Wall -fwarn-tabs -fwarn-incomplete-uni-patterns -fwarn-incomplete-record-updates -O2 -threaded -rtsopts -with-rtsopts=-N1 -with-rtsopts=-s -with-rtsopts=-qg
+  build-depends: base >= 4.5 && < 5
+               , criterion
+               , pretty
