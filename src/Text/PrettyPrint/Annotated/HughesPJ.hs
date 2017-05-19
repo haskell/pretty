@@ -79,7 +79,8 @@ module Text.PrettyPrint.Annotated.HughesPJ (
         -- ** General rendering
         RuneSequence(..),
         fullRender,
-        fullRenderAnn
+        fullRenderAnn,
+        txtPrinter
 
     ) where
 #endif
@@ -253,7 +254,7 @@ annotSize _             = 0
 -- | A `RuneSequence` represents a piece of textual data which can be
 -- reified back to a `String`, and which supports an efficient way to get
 -- the total length of the sequence.
-class RuneSequence r where
+class Monoid r => RuneSequence r where
   len    :: r -> Int
   unpack :: r -> String
 

@@ -77,3 +77,4 @@ benchmark pretty-bench
   build-depends: base >= 4.5 && < 5
                , criterion
                , pretty
+               , bytestring
