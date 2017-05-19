@@ -75,6 +75,7 @@ annotToTd _             = Str ""
 tdToStr :: TextDetails -> String
 tdToStr (Chr c) = [c]
 tdToStr (Str s) = s
+tdToStr (PStr s) = s
 
 -- synthesize with stop for cdoc
 -- constructor order

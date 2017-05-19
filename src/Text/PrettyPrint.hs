@@ -29,7 +29,7 @@ module Text.PrettyPrint (
         -- * Constructing documents
 
         -- ** Converting values into documents
-        char, text, sizedText, zeroWidthText,
+        char, text, ptext, sizedText, zeroWidthText,
         int, integer, float, double, rational,
 
         -- ** Simple derived documents

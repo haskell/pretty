@@ -31,7 +31,7 @@ module Text.PrettyPrint.Annotated.HughesPJ (
         -- * Constructing documents
 
         -- ** Converting values into documents
-        char, text, sizedText, zeroWidthText,
+        char, text, ptext, sizedText, zeroWidthText,
         int, integer, float, double, rational,
 
         -- ** Simple derived documents
@@ -265,9 +265,13 @@ instance RuneSequence [Char] where
 -- point in a @Doc@.
 data TextDetails = Chr  {-# UNPACK #-} !Char -- ^ A single Char fragment
                  | Str  String -- ^ A whole String fragment
+                 | PStr String -- ^ Used to represent a Fast String fragment
+                               --   but now deprecated and identical to the
+                               --   Str constructor.
 #if __GLASGOW_HASKELL__ >= 701
                  deriving (Show, Eq, Generic)
 #endif
+{-# DEPRECATED PStr "PStr is deprecated, please use Str instead." #-}
 
 -- Combining @Doc@ values
 #if __GLASGOW_HASKELL__ >= 800
@@ -326,6 +330,7 @@ instance NFData a => NFData (AnnotDetails a) where
 instance NFData TextDetails where
   rnf (Chr c)    = rnf c
   rnf (Str str)  = rnf str
+  rnf (PStr str) = rnf str
 
 -- ---------------------------------------------------------------------------
 -- Values and Predicates on GDocs and TextDetails
@@ -352,6 +357,11 @@ char c = textBeside_ (NoAnnot (Chr c) 1) Empty
 -- has height 1, while 'empty' has no height.
 text :: RuneSequence r => r -> Doc a
 text s = case len s of {sl -> textBeside_ (NoAnnot (Str . unpack $ s) sl) Empty}
+
+-- | Same as @text@. Used to be used for Bytestrings.
+ptext :: String -> Doc a
+ptext s = case length s of {sl -> textBeside_ (NoAnnot (PStr s) sl) Empty}
+{-# DEPRECATED ptext "ptext is deprecated, use text instead." #-}
 
 -- | Some text with any width. (@text s = sizedText (length s) s@)
 sizedText :: RuneSequence r => Int -> r -> Doc a
@@ -969,6 +979,7 @@ renderStyle s = fullRender (mode s) (lineLength s) (ribbonsPerLine s)
 txtPrinter :: TextDetails -> String -> String
 txtPrinter (Chr c)   s  = c:s
 txtPrinter (Str s1)  s2 = s1 ++ s2
+txtPrinter (PStr s1) s2 = s1 ++ s2
 
 -- | The general rendering interface. Please refer to the @Style@ and @Mode@
 -- types for a description of rendering mode, line length and ribbons.
@@ -1134,6 +1145,7 @@ renderSpans  = finalize
     case td of
       Chr  c -> s { sOutput = c  : sOutput s, sOffset = sOffset s + l }
       Str  t -> s { sOutput = t ++ sOutput s, sOffset = sOffset s + l }
+      PStr t -> s { sOutput = t ++ sOutput s, sOffset = sOffset s + l }
 
 
 -- | Render out a String, interpreting the annotations as part of the resulting
@@ -1189,5 +1201,6 @@ renderDecoratedM startAnn endAnn txt docEnd =
     case td of
       Chr  c -> (txt [c] >> rest, stack)
       Str  s -> (txt s   >> rest, stack)
+      PStr s -> (txt s   >> rest, stack)
 
   finalize (m,_) = m

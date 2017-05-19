@@ -37,7 +37,7 @@ module Text.PrettyPrint.HughesPJ (
         -- * Constructing documents
 
         -- ** Converting values into documents
-        char, text, sizedText, zeroWidthText,
+        char, text, ptext, sizedText, zeroWidthText,
         int, integer, float, double, rational,
 
         -- ** Simple derived documents
@@ -174,6 +174,12 @@ char c = Doc (Ann.char c)
 text :: Ann.RuneSequence r => r -> Doc
 text s = Doc (Ann.text s)
 {-# INLINE text #-}
+
+--- | Same as @text@. Used to be used for Bytestrings.
+ptext :: String -> Doc
+ptext s = Doc (Ann.ptext s)
+{-# INLINE ptext #-}
+{-# DEPRECATED ptext "ptext is deprecated, use text instead." #-}
 
 -- | Some text with any width. (@text s = sizedText (length s) s@)
 sizedText :: Ann.RuneSequence r => Int -> r -> Doc
@@ -432,6 +438,7 @@ renderStyle s = fullRender (mode s) (lineLength s) (ribbonsPerLine s)
 txtPrinter :: TextDetails -> String -> String
 txtPrinter (Chr c)   s  = c:s
 txtPrinter (Str s1)  s2 = s1 ++ s2
+txtPrinter (PStr s1) s2 = s1 ++ s2
 
 -- | The general rendering interface. Please refer to the @Style@ and @Mode@
 -- types for a description of rendering mode, line length and ribbons.
