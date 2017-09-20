@@ -86,6 +86,9 @@ import qualified Text.PrettyPrint.Annotated.HughesPJ as Ann
 
 import Control.DeepSeq ( NFData(rnf) )
 import Data.Function   ( on )
+#if __GLASGOW_HASKELL__ >= 803
+import Prelude         hiding ( (<>) )
+#endif
 #if __GLASGOW_HASKELL__ >= 800
 import qualified Data.Semigroup as Semi ( Semigroup((<>)) )
 #elif __GLASGOW_HASKELL__ < 709

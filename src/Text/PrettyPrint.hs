@@ -41,7 +41,7 @@ module Text.PrettyPrint (
 
         -- ** Combining documents
         empty,
-        (<>), (<+>), hcat, hsep,
+        (X.<>), (<+>), hcat, hsep,
         ($$), ($+$), vcat,
         sep, cat,
         fsep, fcat,
@@ -67,5 +67,5 @@ module Text.PrettyPrint (
 
     ) where
 
-import Text.PrettyPrint.HughesPJ
+import Text.PrettyPrint.HughesPJ as X
 
