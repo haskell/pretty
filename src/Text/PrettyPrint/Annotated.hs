@@ -41,7 +41,7 @@ module Text.PrettyPrint.Annotated (
 
         -- ** Combining documents
         empty,
-        (<>), (<+>), hcat, hsep,
+        (X.<>), (<+>), hcat, hsep,
         ($$), ($+$), vcat,
         sep, cat,
         fsep, fcat,
@@ -74,5 +74,5 @@ module Text.PrettyPrint.Annotated (
 
     ) where
 
-import Text.PrettyPrint.Annotated.HughesPJ
+import Text.PrettyPrint.Annotated.HughesPJ as X
 
