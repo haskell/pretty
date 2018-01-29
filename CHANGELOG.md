@@ -1,5 +1,10 @@
 # Pretty library change log
 
+## 1.1.3.6 -- 30th January, 2018
+
+* Fix compatability with GHC-8.4/base-4.11 (by Herbert Valerio Riedel).
+* Add in benchmarking framework (by Alfredo Di Napoli).
+
 ## 1.1.3.5 -- 1st February, 2017
 
 * Fix documentation formatting bug (by Ivan Lazar Miljenovic)
