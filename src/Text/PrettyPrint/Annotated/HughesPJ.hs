@@ -159,7 +159,7 @@ Laws for oneLiner
 <o1>    oneLiner (nest k p) = nest k (oneLiner p)
 <o2>    oneLiner (x <> y)   = oneLiner x <> oneLiner y
 
-You might think that the following verion of <m1> would
+You might think that the following version of <m1> would
 be neater:
 
 <3 NO>  (text s <> x) $$ y = text s <> ((empty <> x)) $$
@@ -937,16 +937,16 @@ style :: Style
 style = Style { lineLength = 100, ribbonsPerLine = 1.5, mode = PageMode }
 
 -- | Rendering mode.
-data Mode = PageMode    
+data Mode = PageMode
             -- ^ Normal rendering ('lineLength' and 'ribbonsPerLine'
             -- respected').
-          | ZigZagMode  
+          | ZigZagMode
             -- ^ With zig-zag cuts.
-          | LeftMode    
+          | LeftMode
             -- ^ No indentation, infinitely long lines ('lineLength' ignored),
             -- but explicit new lines, i.e., @text "one" $$ text "two"@, are
             -- respected.
-          | OneLineMode 
+          | OneLineMode
             -- ^ All on one line, 'lineLength' ignored and explicit new lines
             -- (@$$@) are turned into spaces.
 #if __GLASGOW_HASKELL__ >= 701
