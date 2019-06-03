@@ -12,6 +12,10 @@ module TestStructures (
         text', annotToTd, tdToStr, genericCProp
     ) where
 
+#if __GLASGOW_HASKELL__ >= 803
+import Prelude hiding ( (<>) )
+#endif
+
 import PrettyTestVersion
 
 data CDoc = CEmpty           -- empty

@@ -11,6 +11,11 @@
 -- 3) Testing bug fixes (whitebox)
 --
 -----------------------------------------------------------------------------
+
+#if __GLASGOW_HASKELL__ >= 803
+import Prelude hiding ( (<>) )
+#endif
+
 import PrettyTestVersion
 import TestGenerators
 import TestStructures
