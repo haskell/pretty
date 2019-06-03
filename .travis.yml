@@ -1,46 +1,33 @@
+sudo: true
 language: haskell
-env:
-  - CABALVER=1.18 GHCVER=7.4.1
-  - CABALVER=1.18 GHCVER=7.4.2
-  - CABALVER=1.18 GHCVER=7.6.1
-  - CABALVER=1.18 GHCVER=7.6.2
-  - CABALVER=1.18 GHCVER=7.6.3
-  - CABALVER=1.20 GHCVER=7.8.1
-  - CABALVER=1.20 GHCVER=7.8.2
-  - CABALVER=1.20 GHCVER=7.8.3
-  - CABALVER=1.20 GHCVER=7.8.3
-  - CABALVER=head GHCVER=head
+
+git:
+  depth: 5
+
+cabal: "2.4"
+
+cache:
+  directories:
+  - "$HOME/.cabal/store"
 
 matrix:
-  allow_failures:
-    - env: CABALVER=head GHCVER=head
+  include:
 
-before_install:
-  - travis_retry sudo add-apt-repository -y ppa:hvr/ghc
-  - travis_retry sudo apt-get update
-  - travis_retry sudo apt-get install cabal-install-$CABALVER ghc-$GHCVER
-  - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
+  # Cabal
+  - ghc: 7.4.2
+  - ghc: 7.6.3
+  - ghc: 7.8.3
+  - ghc: 8.0.2
+  - ghc: 8.2.2
+  - ghc: 8.4.4
+  - ghc: 8.6.3
 
 install:
-  - cabal --version
-  - ghc --version
-  - travis_retry cabal update
+  - |
+    ghc --version
+    cabal --version
+    cabal new-update
+    cabal new-build --enable-tests --disable-benchmarks
 
 script:
- - cabal install --only-dependencies
- - cabal install "QuickCheck >= 2.5 && < 3"
- - cabal configure -v2 --enable-tests
- - cabal build
- - cabal check
- - ([ "$CABALVER" == "1.20" ] && cabal test --show-details=streaming) || ([ "$CABALVER" != "1.20" ] && cabal test)
- - cabal sdist
- - cabal haddock
- - export SRC_TGZ=$(cabal info . | awk '{print $2 ".tar.gz";exit}') ;
-   cd dist/;
-   if [ -f "$SRC_TGZ" ]; then
-      cabal install --force-reinstalls "$SRC_TGZ";
-   else
-      echo "expected '$SRC_TGZ' not found";
-      exit 1;
-   fi
-
+  - cabal new-test --enable-tests --disable-benchmarks
