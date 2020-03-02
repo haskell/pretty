@@ -26,6 +26,9 @@ module Text.PrettyPrint.Annotated (
         -- * The document type
         Doc,
 
+        -- ** Convert unit-annotated Doc to an arbitrary annotation type
+        unitDocToAnnotatedDoc,
+
         -- * Constructing documents
 
         -- ** Converting values into documents

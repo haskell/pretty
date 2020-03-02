@@ -27,6 +27,9 @@ module Text.PrettyPrint.Annotated.HughesPJ (
         -- * The document type
         Doc, TextDetails(..), AnnotDetails(..),
 
+        -- ** Convert unit-annotated Doc to an arbitrary annotation type
+        unitDocToAnnotatedDoc,
+
         -- * Constructing documents
 
         -- ** Converting values into documents
@@ -1192,3 +1195,27 @@ renderDecoratedM startAnn endAnn txt docEnd =
       PStr s -> (txt s   >> rest, stack)
 
   finalize (m,_) = m
+
+-- | Accepte a document with unit annotations and convert it to a document
+-- of an arbitrary annotated type.  Removes any existing annotations.
+unitDocToAnnotatedDoc :: Doc () -> Doc a
+unitDocToAnnotatedDoc (TextBeside AnnotStart d)
+  = unitDocToAnnotatedDoc d
+unitDocToAnnotatedDoc (TextBeside (AnnotEnd _) d)
+  = unitDocToAnnotatedDoc d
+unitDocToAnnotatedDoc (TextBeside (NoAnnot td n) d)
+  = TextBeside (NoAnnot td n) $ unitDocToAnnotatedDoc d
+unitDocToAnnotatedDoc Empty
+  = Empty
+unitDocToAnnotatedDoc NoDoc
+  = NoDoc
+unitDocToAnnotatedDoc (Nest i d)
+  = Nest i $ unitDocToAnnotatedDoc d
+unitDocToAnnotatedDoc (NilAbove d)
+  = NilAbove $ unitDocToAnnotatedDoc d
+unitDocToAnnotatedDoc (Union a b)
+  = Union (unitDocToAnnotatedDoc a) (unitDocToAnnotatedDoc b)
+unitDocToAnnotatedDoc (Beside a f b)
+  = Beside (unitDocToAnnotatedDoc a) f (unitDocToAnnotatedDoc b)
+unitDocToAnnotatedDoc (Above a f b)
+  = Above (unitDocToAnnotatedDoc a) f (unitDocToAnnotatedDoc b)
