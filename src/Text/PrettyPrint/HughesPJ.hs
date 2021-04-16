@@ -387,12 +387,12 @@ punctuate (Doc p) ds = [ Doc d | d <- Ann.punctuate p [ d | Doc d <- ds ] ]
 --                         `union`
 --                          vcat ps
 
--- | Either 'hsep' or 'vcat'.
+-- | 'hsep' if it fits, otherwise 'vcat'.
 sep  :: [Doc] -> Doc
 sep  = liftList Ann.sep
 {-# INLINE sep #-}
 
--- | Either 'hcat' or 'vcat'.
+-- |'hcat' if it fits, otherwise 'vcat'.
 cat :: [Doc] -> Doc
 cat = liftList Ann.cat
 {-# INLINE cat #-}

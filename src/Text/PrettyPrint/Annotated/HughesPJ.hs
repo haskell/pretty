@@ -720,11 +720,11 @@ nilBeside g p | g         = textBeside_ spaceText p
 --                         `union`
 --                          vcat ps
 
--- | Either 'hsep' or 'vcat'.
+-- | 'hsep' if it fits, else 'vcat'.
 sep  :: [Doc a] -> Doc a
 sep = sepX True   -- Separate with spaces
 
--- | Either 'hcat' or 'vcat'.
+-- | 'hcat' if it fits, else 'vcat'.
 cat :: [Doc a] -> Doc a
 cat = sepX False  -- Don't
 
