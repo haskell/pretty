@@ -34,6 +34,9 @@ module Text.PrettyPrint.HughesPJ (
         -- * The document type
         Doc, TextDetails(..),
 
+        -- ** Converting to an annotated Doc
+        docToUnitDoc,
+
         -- * Constructing documents
 
         -- ** Converting values into documents
@@ -454,4 +457,8 @@ fullRender :: Mode                     -- ^ Rendering mode.
 fullRender m lineLen ribbons txt rest (Doc doc)
   = Ann.fullRender m lineLen ribbons txt rest doc
 {-# INLINE fullRender #-}
+
+-- | Convert an unannotated 'Doc' to a unit-annotated @Ann.Doc ()@.
+docToUnitDoc :: Doc -> Ann.Doc ()
+docToUnitDoc (Doc ad) = ad
 

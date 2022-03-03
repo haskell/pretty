@@ -26,6 +26,9 @@ module Text.PrettyPrint (
         -- * The document type
         Doc,
 
+        -- ** Converting to an annotated Doc
+        docToUnitDoc,
+
         -- * Constructing documents
 
         -- ** Converting values into documents
