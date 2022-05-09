@@ -3,6 +3,7 @@
 #if __GLASGOW_HASKELL__ >= 701
 {-# LANGUAGE Safe #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleInstances #-}
 #endif
 
 -----------------------------------------------------------------------------
@@ -76,8 +77,10 @@ module Text.PrettyPrint.Annotated.HughesPJ (
         Mode(..),
 
         -- ** General rendering
+        RuneSequence(..),
         fullRender,
-        fullRenderAnn
+        fullRenderAnn,
+        txtPrinter
 
     ) where
 #endif
@@ -251,6 +254,17 @@ annotSize :: AnnotDetails a -> Int
 annotSize (NoAnnot _ l) = l
 annotSize _             = 0
 
+-- | A `RuneSequence` represents a piece of textual data which can be
+-- reified back to a `String`, and which supports an efficient way to get
+-- the total length of the sequence.
+class Monoid r => RuneSequence r where
+  len    :: r -> Int
+  unpack :: r -> String
+
+instance RuneSequence [Char] where
+  len    = length
+  unpack = id
+
 -- | A TextDetails represents a fragment of text that will be output at some
 -- point in a @Doc@.
 data TextDetails = Chr  {-# UNPACK #-} !Char -- ^ A single Char fragment
@@ -261,6 +275,7 @@ data TextDetails = Chr  {-# UNPACK #-} !Char -- ^ A single Char fragment
 #if __GLASGOW_HASKELL__ >= 701
                  deriving (Show, Eq, Generic)
 #endif
+{-# DEPRECATED PStr "PStr is deprecated, please use Str instead." #-}
 
 -- Combining @Doc@ values
 #if __GLASGOW_HASKELL__ >= 800
@@ -344,20 +359,21 @@ char c = textBeside_ (NoAnnot (Chr c) 1) Empty
 --
 -- The side condition on the last law is necessary because @'text' \"\"@
 -- has height 1, while 'empty' has no height.
-text :: String -> Doc a
-text s = case length s of {sl -> textBeside_ (NoAnnot (Str s) sl) Empty}
+text :: RuneSequence r => r -> Doc a
+text s = case len s of {sl -> textBeside_ (NoAnnot (Str . unpack $ s) sl) Empty}
 
 -- | Same as @text@. Used to be used for Bytestrings.
 ptext :: String -> Doc a
 ptext s = case length s of {sl -> textBeside_ (NoAnnot (PStr s) sl) Empty}
+{-# DEPRECATED ptext "ptext is deprecated, use text instead." #-}
 
 -- | Some text with any width. (@text s = sizedText (length s) s@)
-sizedText :: Int -> String -> Doc a
-sizedText l s = textBeside_ (NoAnnot (Str s) l) Empty
+sizedText :: RuneSequence r => Int -> r -> Doc a
+sizedText l s = textBeside_ (NoAnnot (Str  . unpack $ s) l) Empty
 
 -- | Some text, but without any width. Use for non-printing text
 -- such as a HTML or Latex tags
-zeroWidthText :: String -> Doc a
+zeroWidthText :: RuneSequence r => r -> Doc a
 zeroWidthText = sizedText 0
 
 -- | The empty document, with no height and no width.

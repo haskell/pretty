@@ -174,22 +174,23 @@ char c = Doc (Ann.char c)
 --
 -- The side condition on the last law is necessary because @'text' \"\"@
 -- has height 1, while 'empty' has no height.
-text :: String -> Doc
+text :: Ann.RuneSequence r => r -> Doc
 text s = Doc (Ann.text s)
 {-# INLINE text #-}
 
--- | Same as @text@. Used to be used for Bytestrings.
+--- | Same as @text@. Used to be used for Bytestrings.
 ptext :: String -> Doc
 ptext s = Doc (Ann.ptext s)
 {-# INLINE ptext #-}
+{-# DEPRECATED ptext "ptext is deprecated, use text instead." #-}
 
 -- | Some text with any width. (@text s = sizedText (length s) s@)
-sizedText :: Int -> String -> Doc
+sizedText :: Ann.RuneSequence r => Int -> r -> Doc
 sizedText l s = Doc (Ann.sizedText l s)
 
 -- | Some text, but without any width. Use for non-printing text
 -- such as a HTML or Latex tags
-zeroWidthText :: String -> Doc
+zeroWidthText :: Ann.RuneSequence r => r -> Doc
 zeroWidthText = sizedText 0
 
 -- | The empty document, with no height and no width.

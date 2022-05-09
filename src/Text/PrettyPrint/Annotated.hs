@@ -68,6 +68,7 @@ module Text.PrettyPrint.Annotated (
         renderStyle,
 
         -- ** General rendering
+        RuneSequence(..),
         fullRender,
         fullRenderAnn,
         Mode(..), TextDetails(..)
