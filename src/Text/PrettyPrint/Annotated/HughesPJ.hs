@@ -493,15 +493,15 @@ reduceDoc p              = p
 
 -- | List version of '<>'.
 hcat :: [Doc a] -> Doc a
-hcat = snd . reduceHoriz . foldr (\p q -> Beside p False q) empty
+hcat = snd . reduceHoriz . foldr (`Beside` False) empty
 
 -- | List version of '<+>'.
 hsep :: [Doc a] -> Doc a
-hsep = snd . reduceHoriz . foldr (\p q -> Beside p True q)  empty
+hsep = snd . reduceHoriz . foldr (`Beside` True)  empty
 
 -- | List version of '$$'.
 vcat :: [Doc a] -> Doc a
-vcat = snd . reduceVert . foldr (\p q -> Above p False q) empty
+vcat = snd . reduceVert . foldr (`Above` False) empty
 
 -- | Nest (or indent) a document by a given number of positions
 -- (which may also be negative).  'nest' satisfies the laws:
