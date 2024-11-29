@@ -89,7 +89,7 @@ import Data.Function   ( on )
 #if __GLASGOW_HASKELL__ >= 803
 import Prelude         hiding ( (<>) )
 #endif
-#if __GLASGOW_HASKELL__ >= 800
+#if __GLASGOW_HASKELL__ >= 800 || __MHS__
 import qualified Data.Semigroup as Semi ( Semigroup((<>)) )
 #elif __GLASGOW_HASKELL__ < 709
 import Data.Monoid     ( Monoid(mempty, mappend)  )
@@ -130,7 +130,7 @@ liftBinary f (Doc a) (Doc b) = Doc (f a b)
 type RDoc = Doc
 
 -- Combining @Doc@ values
-#if __GLASGOW_HASKELL__ >= 800
+#if __GLASGOW_HASKELL__ >= 800 || __MHS__
 instance Semi.Semigroup Doc where
     (<>) = (Text.PrettyPrint.HughesPJ.<>)
 

@@ -87,7 +87,7 @@ import Data.Function   ( on )
 #if __GLASGOW_HASKELL__ >= 803
 import Prelude         hiding ( (<>) )
 #endif
-#if __GLASGOW_HASKELL__ >= 800
+#if __GLASGOW_HASKELL__ >= 800 || __MHS__
 import qualified Data.Semigroup as Semi ( Semigroup((<>)) )
 #elif __GLASGOW_HASKELL__ < 709
 import Data.Monoid     ( Monoid(mempty, mappend)  )
@@ -258,12 +258,12 @@ data TextDetails = Chr  {-# UNPACK #-} !Char -- ^ A single Char fragment
                  | PStr String -- ^ Used to represent a Fast String fragment
                                --   but now deprecated and identical to the
                                --   Str constructor.
-#if __GLASGOW_HASKELL__ >= 701
+#if __GLASGOW_HASKELL__ >= 701 || __MHS__
                  deriving (Show, Eq, Generic)
 #endif
 
 -- Combining @Doc@ values
-#if __GLASGOW_HASKELL__ >= 800
+#if __GLASGOW_HASKELL__ >= 800 || __MHS__
 instance Semi.Semigroup (Doc a) where
 #ifndef TESTING
     (<>) = (Text.PrettyPrint.Annotated.HughesPJ.<>)
@@ -949,7 +949,7 @@ data Mode = PageMode
           | OneLineMode
             -- ^ All on one line, 'lineLength' ignored and explicit new lines
             -- (@$$@) are turned into spaces.
-#if __GLASGOW_HASKELL__ >= 701
+#if __GLASGOW_HASKELL__ >= 701 || __MHS__
           deriving (Show, Eq, Generic)
 #endif
 
