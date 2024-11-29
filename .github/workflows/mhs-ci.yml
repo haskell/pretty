@@ -1,0 +1,37 @@
+name: mhs-ci
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build-mhs-pretty:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: checkout mhs repo
+      uses: actions/checkout@v4
+      with:
+        repository: augustss/MicroHs
+        ref: stable-3
+        path: mhs
+    - name: make and install mhs
+      run: |
+        cd mhs
+        make minstall
+
+    - name: checkout pretty repo
+      uses: actions/checkout@v4
+      with:
+        path: pretty
+    - name: compile and install pretty package
+      run: |
+        PATH="$HOME/.mcabal/bin:$PATH"
+        cd pretty
+        mcabal install
+
+    - name: cleanup
+      run: |
+        rm -rf $HOME/.mcabal
