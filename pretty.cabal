@@ -47,8 +47,9 @@ Library
         Text.PrettyPrint.Annotated.HughesPJ
         Text.PrettyPrint.Annotated.HughesPJClass
     build-depends: base >= 4.5 && < 5,
-                   deepseq >= 1.1,
-                   ghc-prim
+                   deepseq >= 1.1
+    if impl(ghc)
+      build-depends: ghc-prim
     extensions: CPP, BangPatterns, DeriveGeneric
     ghc-options: -Wall -fwarn-tabs
 
