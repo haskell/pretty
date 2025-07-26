@@ -1,0 +1,71 @@
+# Andreas, 2025-07-26, hand-knitted CI using Cabal
+
+name: Cabal CI
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: ${{ matrix.os }} GHC ${{ matrix.ghc }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        ghc:
+        # - '9.12'  # currently subsumed by latest
+          - '9.10'
+          - '9.8'
+          - '9.6'
+        # - '9.4'   # skip intermediate ghc version
+        # - '9.2'   # skip intermediate ghc version
+        # - '9.0'   # skip intermediate ghc version
+        # - '8.10'  # skip intermediate ghc version
+        # - '8.8'   # skip intermediate ghc version
+        # - '8.6'   # skip intermediate ghc version
+        # - '8.4'   # skip intermediate ghc version
+        # - '8.2'   # skip intermediate ghc version
+          - '8.0'
+        include:
+         - os: ubuntu-latest
+           ghc: latest
+         - os: macos-latest
+           ghc: latest
+         - os: windows-latest
+           ghc: latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: haskell-actions/setup@v2
+      id: setup
+      with:
+        ghc-version: ${{ matrix.ghc }}
+
+    - name: Restore cache
+      uses: actions/cache/restore@v4
+      id: cache
+      with:
+        path: ${{ steps.setup.outputs.cabal-store }}
+        key: ${{ runner.os }}-ghc-${{ steps.setup.outputs.ghc-version }}-cabal-${{ steps.setup.outputs.cabal-version }}-sha-${{ github.sha }}
+
+    - run: cabal build --dependencies-only
+    - run: cabal build
+
+    # Cannot build the testsuite because template-haskell depends on pretty
+    # and containers and QuickCheck depend on template-haskell.
+    # See also https://github.com/haskell/containers/issues/1156
+    # - run: cabal build -c 'QuickCheck -templatehaskell' --enable-tests
+    # - run: cabal test  -c 'QuickCheck -templatehaskell' --enable-tests
+    # - run: cabal build -c 'QuickCheck -templatehaskell' --enable-tests --enable-benchmarks
+    # - run: cabal bench -c 'QuickCheck -templatehaskell' --enable-tests --enable-benchmarks
+
+    - name: Save cache
+      uses: actions/cache/save@v4
+      if: always()
+      with:
+        path: ${{ steps.setup.outputs.cabal-store }}
+        key:  ${{ steps.cache.outputs.cache-primary-key }}

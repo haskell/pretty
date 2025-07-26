@@ -1,2 +1,6 @@
 branches: master
+installed: +all -pretty
+-- Tests and benchmarks do not build due to cycling package dependencies.
+-- QuickCheck/containers -> template-haskell -> pretty.
 benchmarks: False
+tests: False
