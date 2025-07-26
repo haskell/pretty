@@ -32,10 +32,14 @@ jobs:
 
     - run: cabal build --dependencies-only
     - run: cabal build
-    - run: cabal build --enable-tests
-    - run: cabal test
-    - run: cabal build --enable-tests --enable-benchmarks
-    - run: cabal bench
+
+    # Cannot build the testsuite because template-haskell depends on pretty
+    # and containers and QuickCheck depend on template-haskell.
+    # See also https://github.com/haskell/containers/issues/1156
+    # - run: cabal build -c 'QuickCheck -templatehaskell' --enable-tests
+    # - run: cabal test  -c 'QuickCheck -templatehaskell' --enable-tests
+    # - run: cabal build -c 'QuickCheck -templatehaskell' --enable-tests --enable-benchmarks
+    # - run: cabal bench -c 'QuickCheck -templatehaskell' --enable-tests --enable-benchmarks
 
     - name: Save cache
       uses: actions/cache/save@v4

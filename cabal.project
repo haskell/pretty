@@ -1,1 +1,7 @@
 packages: .
+
+constraints: QuickCheck -templatehaskell
+
+-- If we could get rid of template-haskell we could build the testsuite.
+-- https://github.com/haskell/containers/issues/1156
+-- constraints: containers -templatehaskell
