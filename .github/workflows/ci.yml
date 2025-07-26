@@ -1,0 +1,45 @@
+name: Cabal CI
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: ${{ matrix.os }} GHC ${{ matrix.ghc }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        ghc: ['9.12']
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: haskell-actions/setup@v2
+      id: setup
+      with:
+        ghc-version: ${{ matrix.ghc }}
+
+    - name: Restore cache
+      uses: actions/cache/restore@v4
+      id: cache
+      with:
+        path: ${{ steps.setup.outputs.cabal-store }}
+        key: ${{ runner.os }}-ghc-${{ steps.setup.outputs.ghc-version }}-cabal-${{ steps.setup.outputs.cabal-version }}-sha-${{ github.sha }}
+
+    - run: cabal build --dependencies-only
+    - run: cabal build
+    - run: cabal build --enable-tests
+    - run: cabal test
+    - run: cabal build --enable-tests --enable-benchmarks
+    - run: cabal bench
+
+    - name: Save cache
+      uses: actions/cache/save@v4
+      if: always()
+      with:
+        path: ${{ steps.setup.outputs.cabal-store }}
+        key:  ${{ steps.cache.outputs.cache-primary-key }}
