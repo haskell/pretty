@@ -1,7 +1,9 @@
 dist/
+dist-newstyle/
 GNUmakefile
 dist-install
 ghc.mk
 cabal.sandbox.config
-.cabal-sandbox
-.stack-work
+.cabal-sandbox/
+.stack-work/
+*~
