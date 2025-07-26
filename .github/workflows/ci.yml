@@ -1,3 +1,5 @@
+# Andreas, 2025-07-26, hand-knitted CI using Cabal
+
 name: Cabal CI
 on:
   push:
@@ -14,7 +16,27 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        ghc: ['9.12']
+        ghc:
+        # - '9.12'  # currently subsumed by latest
+          - '9.10'
+          - '9.8'
+          - '9.6'
+        # - '9.4'   # skip intermediate ghc version
+        # - '9.2'   # skip intermediate ghc version
+        # - '9.0'   # skip intermediate ghc version
+        # - '8.10'  # skip intermediate ghc version
+        # - '8.8'   # skip intermediate ghc version
+        # - '8.6'   # skip intermediate ghc version
+        # - '8.4'   # skip intermediate ghc version
+        # - '8.2'   # skip intermediate ghc version
+          - '8.0'
+        include:
+         - os: ubuntu-latest
+           ghc: latest
+         - os: macos-latest
+           ghc: latest
+         - os: windows-latest
+           ghc: latest
 
     steps:
     - uses: actions/checkout@v4
