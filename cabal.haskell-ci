@@ -1,2 +1,3 @@
 branches: master
--- benchmarks: False
+installed: +all -pretty
+benchmarks: False
