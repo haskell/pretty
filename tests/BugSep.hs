@@ -9,7 +9,7 @@ main :: IO ()
 main = do
     putStrLn ""
     putStrLn "Note that the correct definition of sep is currently unclear"
-    putStrLn "It is neither foldr ($+$) empty nor foldr ($$) empty"    
+    putStrLn "It is neither foldr ($+$) empty nor foldr ($$) empty"
     putStrLn "------------------------------------------------------------"
     let test1 = [ text "" $+$  text "c", nest 3 ( text "a") ]
     let test2 = [ text "c", nest 3 ( text "b") ]
