@@ -6,7 +6,7 @@
 -- Module      :  Text.PrettyPrint.Annotated
 -- Copyright   :  (c) Trevor Elliott <revor@galois.com> 2015
 -- License     :  BSD-style (see the file LICENSE)
--- 
+--
 -- Maintainer  :  David Terei <code@davidterei.com>
 -- Stability   :  stable
 -- Portability :  portable
@@ -21,7 +21,7 @@
 --
 -----------------------------------------------------------------------------
 
-module Text.PrettyPrint.Annotated ( 
+module Text.PrettyPrint.Annotated (
 
         -- * The document type
         Doc,
