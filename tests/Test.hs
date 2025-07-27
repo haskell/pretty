@@ -31,6 +31,10 @@ import Data.List (intersperse)
 import Debug.Trace
 
 import Test.QuickCheck
+  ( Args(..), Property, Testable, Result(Failure)
+  , (==>)
+  , classify, expectFailure, forAll, quickCheckWithResult, stdArgs
+  )
 
 main :: IO ()
 main = do
