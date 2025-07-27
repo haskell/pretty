@@ -3,17 +3,19 @@
 {-# LANGUAGE PackageImports #-}
 module Main where
 
-import Criterion.Main
-import Data.List
+import Prelude hiding ( (<>) )
+
+import Criterion.Main ( bench, bgroup, defaultMain, nf)
+import qualified Data.List as List
 import Text.PrettyPrint.HughesPJ
 
 --------------------------------------------------------------------------------
 f_left :: Int -> Doc
-f_left n = foldl' (<>) empty (map (text . show) [10001..10000+n])
+f_left n = List.foldl' (<>) empty (map (text . show) [10001..10000+n])
 
 --------------------------------------------------------------------------------
 f_right :: Int -> Doc
-f_right n = foldr (<>) empty (map (text . show) [10001..10000+n])
+f_right n = List.foldr (<>) empty (map (text . show) [10001..10000+n])
 
 --------------------------------------------------------------------------------
 stuff :: String -> String -> Double -> Rational -> Int -> Int -> Int -> Doc
