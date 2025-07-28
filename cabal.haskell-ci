@@ -6,6 +6,9 @@ installed: +all -pretty
 -- causing a dependency cycle that cabal cannot handle.
 benchmarks: False
 
--- Since GHC 9.8, containers depend also on template-haskell so building
--- the testsuite is broken as well there.
-tests: <9.8
+-- Testsuite broken with GHC 8 because it does some hack
+-- dropping the module header when building the testsuite
+-- which leads to misplaced LANGUAGE pragmas.
+-- Testsuite broken with GHC >= 9.4 due to cycle involving
+-- QuickCheck, containers, template-haskell and pretty.
+tests: >=9.0 && <9.4
