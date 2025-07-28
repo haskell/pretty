@@ -55,11 +55,17 @@ jobs:
     - run: cabal build --dependencies-only
     - run: cabal build
 
-    # Cannot build the testsuite because template-haskell depends on pretty
-    # and containers and QuickCheck depend on template-haskell.
-    # See also https://github.com/haskell/containers/issues/1156
-    # - run: cabal build -c 'QuickCheck -templatehaskell' --enable-tests
-    # - run: cabal test  -c 'QuickCheck -templatehaskell' --enable-tests
+    - name: Tests (not possible for GHC 9.8 and up)
+      if: matrix.ghc == '9.6'
+      run: |
+        cabal build -c 'QuickCheck -templatehaskell' --enable-tests
+        cabal test  -c 'QuickCheck -templatehaskell' --enable-tests
+      # Since 9.8, containers depends on template-haskell which depends on pretty.
+      # This cycle cannot be solved by cabal.
+      # See https://github.com/haskell/containers/issues/1156
+
+    # Cannot build the benchmarks because they depend on template-haskell
+    # which depends on pretty.
     # - run: cabal build -c 'QuickCheck -templatehaskell' --enable-tests --enable-benchmarks
     # - run: cabal bench -c 'QuickCheck -templatehaskell' --enable-tests --enable-benchmarks
 
