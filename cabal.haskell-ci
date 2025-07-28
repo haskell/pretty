@@ -2,5 +2,10 @@ branches: master
 installed: +all -pretty
 -- Tests and benchmarks do not build due to cycling package dependencies.
 -- QuickCheck/containers -> template-haskell -> pretty.
+-- Building the benchmarks requires template-haskell which depends on pretty
+-- causing a dependency cycle that cabal cannot handle.
 benchmarks: False
-tests: False
+
+-- Since GHC 9.8, containers depend also on template-haskell so building
+-- the testsuite is broken as well there.
+tests: <9.8
